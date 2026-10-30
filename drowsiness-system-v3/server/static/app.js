@@ -88,86 +88,6 @@ const AUTH = {
   }
 };
 
-// ─── Mode Démo automatique (Netlify & hôtes statiques sans backend Python) ──
-function getMockApiResponse(path, opts = {}) {
-  const p = path.split('?')[0];
-  if (p === '/api/auth/login') {
-    const body = (typeof opts.body === 'string') ? JSON.parse(opts.body) : (opts.body || {});
-    const user = (body.username || 'client1').trim();
-    const isSuper = user.toLowerCase().includes('police') || user.toLowerCase().includes('super');
-    return {
-      ok: true,
-      token: 'demo-tok-' + Date.now(),
-      user: {
-        id: isSuper ? 1 : 2,
-        username: user,
-        role: isSuper ? 'supervisor' : 'client',
-        driver_id: isSuper ? null : 1,
-        vehicle_code: isSuper ? null : 'TUN-101',
-        plate: isSuper ? null : '195-TN-5521',
-        name: isSuper ? 'Poste Central Police' : 'Ahmed Ben Ali'
-      }
-    };
-  }
-  if (p === '/api/auth/me') {
-    return { ok: true, user: AUTH.user || { id: 2, username: 'client1', role: 'client', driver_id: 1, vehicle_code: 'TUN-101', plate: '195-TN-5521', name: 'Ahmed Ben Ali' } };
-  }
-  if (p === '/api/plans') {
-    return [
-      { id: 'basic', name: 'Basique', price: 19, features: ['1 voiture', 'Détection de somnolence en direct', 'Alerte sonore et vibration'] },
-      { id: 'standard', name: 'Standard', price: 39, popular: true, features: ['Tout le Basique', "Appel de la police (simulé)", 'Suivi du trajet en direct'] },
-      { id: 'premium', name: 'Premium', price: 69, features: ['Tout le Standard', 'Historique complet des images', 'Assistance prioritaire (démo)'] }
-    ];
-  }
-  if (p === '/api/client/subscription') {
-    return { plan_id: 'standard', status: 'active', brand: 'Visa', last4: '4242' };
-  }
-  if (p === '/api/vehicles') {
-    return [
-      { id: 1, code: 'TUN-101', plate: '195-TN-5521', driver_name: 'Ahmed Ben Ali', driver_phone: '+216 98 123 456', car_model: 'Peugeot 208', status: 'online' },
-      { id: 2, code: 'CAR-02', plate: '184-TN-2024', driver_name: 'Moncef Trabelsi', driver_phone: '+216 22 456 789', car_model: 'Renault Clio', status: 'online' },
-      { id: 3, code: 'CAR-03', plate: '210-TN-8802', driver_name: 'Sami Khelifi', driver_phone: '+216 55 789 012', car_model: 'Volkswagen Golf', status: 'online' },
-      { id: 4, code: 'CAR-04', plate: '222-TN-3310', driver_name: 'Fatma Dridi', driver_phone: '+216 99 333 444', car_model: 'Toyota Yaris', status: 'offline' }
-    ];
-  }
-  if (p === '/api/drivers') {
-    return [
-      { id: 1, name: 'Ahmed Ben Ali', phone: '+216 98 123 456', vehicle_code: 'TUN-101', username: 'client1' },
-      { id: 2, name: 'Moncef Trabelsi', phone: '+216 22 456 789', vehicle_code: 'CAR-02', username: 'client2' },
-      { id: 3, name: 'Sami Khelifi', phone: '+216 55 789 012', vehicle_code: 'CAR-03', username: 'client3' },
-      { id: 4, name: 'Fatma Dridi', phone: '+216 99 333 444', vehicle_code: 'CAR-04', username: 'client4' }
-    ];
-  }
-  if (p === '/api/stats') {
-    return { total_alerts: 14, active_vehicles: 3, total_vehicles: 4, safe_score: 94, recent_events: 5 };
-  }
-  if (p === '/api/settings') {
-    return {
-      closed_eyes_sec: 5.0, countdown_sec: 10, emergency_number: '+216 00 000 000',
-      emergency_msg: 'Simulation: conducteur endormi, position transmise à la Protection civile.',
-      mqtt_host: 'localhost', mqtt_port: 1883
-    };
-  }
-  if (p === '/api/route') {
-    return fetch('/static/route.json').then(r => r.json()).catch(() => fetch('/route.json').then(r => r.json())).catch(() => [
-      [35.8256, 10.5908], [35.8300, 10.6050], [35.8265, 10.6340], [35.8190, 10.6180]
-    ]);
-  }
-  if (p === '/api/history' || p === '/api/detections') {
-    return [
-      { id: 1, vehicle_code: 'TUN-101', timestamp: Date.now() - 360000, ear: 0.18, closed_sec: 5.2, image_url: '/static/captures/1729606132_TUN-101.jpg' },
-      { id: 2, vehicle_code: 'CAR-02', timestamp: Date.now() - 1200000, ear: 0.15, closed_sec: 5.4, image_url: '/static/captures/1729606132_CAR-02.jpg' }
-    ];
-  }
-  if (p === '/api/alerts') {
-    return [
-      { id: 1, vehicle_id: 'TUN-101', plate: '195-TN-5521', level: 4, title: 'Somnolence détectée (>5s)', timestamp: Date.now() - 450000, acked: true },
-      { id: 2, vehicle_id: 'CAR-02', plate: '184-TN-2024', level: 2, title: 'Inattention', timestamp: Date.now() - 1800000, acked: true }
-    ];
-  }
-  return { ok: true };
-}
-
 async function api(path, opts = {}) {
   const o = { headers: {}, ...opts };
   if (AUTH.token) o.headers['Authorization'] = `Bearer ${AUTH.token}`;
@@ -175,23 +95,11 @@ async function api(path, opts = {}) {
     o.body = JSON.stringify(o.body);
     o.headers['Content-Type'] = 'application/json';
   }
-  try {
-    const r = await fetch(path, o);
-    if (!r.ok) {
-      if (r.status === 404 || r.status === 405) {
-        return getMockApiResponse(path, opts);
-      }
-      if (r.status === 401 && !path.includes('/api/auth/')) {
-        AUTH.clear(); showAuthScreen(); throw new Error('Session expirée');
-      }
-      const data = await r.json().catch(() => ({}));
-      throw new Error(data.error || r.statusText);
-    }
-    return await r.json();
-  } catch (err) {
-    if (err && err.message === 'Session expirée') throw err;
-    return getMockApiResponse(path, opts);
-  }
+  const r = await fetch(path, o);
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 401 && !path.includes('/api/auth/')) { AUTH.clear(); showAuthScreen(); throw new Error('Session expirée'); }
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
 }
 
 // ─── I18N ──────────────────────────────────────────────────────────────
@@ -248,6 +156,11 @@ const isOnline = (code) => !!S.online[code];
 let PAGE = '';
 
 function getPagesForRole() {
+  if (AUTH.user?.role === 'client' && !APP_CLIENT) {
+    return [
+      { id: 'client_plan', icon: 'fa-crown', group: 'Mon Compte' },
+    ];
+  }
   if (AUTH.user?.role === 'client') {
     return [
       { id: 'client_dashboard', icon: 'fa-gauge-high', group: 'Surveillance' },
@@ -255,8 +168,8 @@ function getPagesForRole() {
       { id: 'client_trip', icon: 'fa-map-location-dot', group: 'Surveillance' },
       { id: 'client_alerts', icon: 'fa-bell', group: 'Surveillance' },
       { id: 'client_detections', icon: 'fa-eye', group: 'Surveillance' },
-      { id: 'client_profile', icon: 'fa-id-card', group: 'Mon Compte' },
       { id: 'client_plan', icon: 'fa-crown', group: 'Mon Compte' },
+      { id: 'client_profile', icon: 'fa-id-card', group: 'Mon Compte' },
     ];
   }
   return [
@@ -285,7 +198,7 @@ function renderNav() {
 function route() {
   if (!AUTH.user) { showAuthScreen(); return; }
   const pages = getPagesForRole();
-  const defaultPage = AUTH.user.role === 'client' ? 'client_dashboard' : 'dashboard';
+  const defaultPage = AUTH.user.role === 'client' ? (APP_CLIENT ? 'client_dashboard' : 'client_plan') : 'dashboard';
   const id = (location.hash || `#${defaultPage}`).slice(1).split('?')[0];
   PAGE = pages.some(p => p.id === id) ? id : defaultPage;
   document.body.classList.remove('menu-open');
@@ -434,7 +347,7 @@ async function onAuthSuccess() {
   hideAuthScreen();
   await loadInitialData();
   connectWS();
-  location.hash = AUTH.user.role === 'client' ? '#client_dashboard' : '#dashboard';
+  location.hash = AUTH.user.role === 'client' ? (APP_CLIENT ? '#client_dashboard' : '#client_plan') : '#dashboard';
   route();
   if (APP_CLIENT && AUTH.user.role === 'client') nativeCam('start');
 }
@@ -1653,37 +1566,8 @@ function connectWS() {
     S.wsOk = false; setConnStatus(false);
     if (AUTH.token) WS_TIMER = setTimeout(connectWS, 3000);
   };
-  ws.onerror = () => {
-    S.wsOk = false;
-    // Si on est sur Netlify ou hébergement statique sans WebSocket serveur, activer la démo animée
-    startDemoSimulation();
-  };
+  ws.onerror = () => { S.wsOk = false; setConnStatus(false); };
   ws.onmessage = (e) => { try { handleWsMessage(JSON.parse(e.data)); } catch {} };
-}
-
-let DEMO_SIM_INTERVAL = null;
-function startDemoSimulation() {
-  if (DEMO_SIM_INTERVAL) return;
-  setConnStatus(true);
-  let step = 0;
-  DEMO_SIM_INTERVAL = setInterval(() => {
-    if (!AUTH.token) return;
-    step = (step + 1) % 60;
-    const lat = 35.8256 + Math.sin(step / 5) * 0.006;
-    const lon = 10.5908 + Math.cos(step / 5) * 0.008;
-    handleWsMessage({
-      type: 'state',
-      vehicle_id: 'TUN-101',
-      speed: 72 + Math.floor(Math.sin(step) * 6),
-      lat: lat,
-      lon: lon,
-      angle: (step * 18) % 360,
-      ear: 0.32,
-      state: 'EyesOpen',
-      closed_s: 0.0,
-      vigilance_score: 96
-    });
-  }, 2000);
 }
 
 function setConnStatus(ok) {
@@ -1716,15 +1600,10 @@ function handleWsMessage(m) {
       updateClientLiveBanner(); updateDashboardLive(); updateClientDash();
       break;
     case 'alert':
-      // Police: silence tant que le conducteur n'a pas dépassé le délai (10 s). L'appel arrive par 'escalation'.
-      if (!isClient && m.level >= 4) {
-        if (PAGE === 'alerts' && $('#view')) pageAlerts($('#view'));
-        break;
-      }
       S.unread += 1;
       $('#bellDot').style.display = 'block';
       if (m.level >= 4) {
-        if (isClient && (m.vehicle_id === myCode || m.vehicle_code === myCode)) showClientAlert(m);
+        if (isClient && APP_CLIENT && (m.vehicle_id === myCode || m.vehicle_code === myCode)) showClientAlert(m);
         else if (!isClient) showPoliceDispatch(m);
       } else { toast(`${m.plate || m.vehicle_id}: ${m.title}`); }
       if (PAGE === 'client_alerts' && $('#view')) pageClientAlerts($('#view'));
