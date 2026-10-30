@@ -1,0 +1,149 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Driver Safety Monitor — THEME "Aurora" (chargé après app.css)
+   Nouveau look: menu compact à icônes, cartes en verre, connexion flottante.
+   ══════════════════════════════════════════════════════════════════════ */
+:root {
+  --bg: #edf2f9; --bg2: #e3eaf5; --surface: #ffffff; --surface2: #f6f9fd; --border: #dbe4f0;
+  --text: #0b1b33; --text2: #2b3f5c; --muted: #5d7190; --muted2: #8fa1bb;
+  --brand: #0fb98a; --brand-400: #2fd3a3; --brand-300: #7ae8c6; --brand-100: #d6f7ec;
+  --side-bg: #0b1530; --side-bg2: #070f22;
+  --r-sm: 12px; --r-md: 18px; --r-lg: 24px; --r-xl: 32px;
+  --shadow-sm: 0 6px 18px rgba(18, 38, 74, .08);
+  --shadow-md: 0 14px 34px rgba(18, 38, 74, .12);
+}
+[data-theme="dark"] {
+  --bg: #060d1d; --bg2: #09142a; --surface: #0e1a33; --surface2: #0b1630; --border: #1c2f52;
+  --text: #e9f1fc; --text2: #b9cce3; --muted: #7f9cc0; --muted2: #55739a;
+  --side-bg: #040a18; --side-bg2: #050c1c;
+}
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background:
+    radial-gradient(900px 500px at 8% -10%, rgba(15, 185, 138, .10), transparent 60%),
+    radial-gradient(800px 480px at 100% 0%, rgba(59, 130, 246, .10), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+/* ─── Cartes et boutons ─── */
+.card {
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+}
+.card::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg, var(--brand), #3b82f6); opacity: .85; pointer-events: none;
+}
+.card-head { font-weight: 800; letter-spacing: -.2px; }
+.ico-sm { border-radius: 14px; background: linear-gradient(135deg, var(--brand-100), transparent); }
+.btn { border-radius: 14px; font-weight: 700; box-shadow: 0 6px 16px rgba(15, 185, 138, .22); }
+.btn.gray { box-shadow: none; }
+.btn:hover { transform: translateY(-1px); }
+.btn.red { box-shadow: 0 6px 16px rgba(239, 68, 68, .28); }
+input, select, textarea { border-radius: 14px !important; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--brand) !important; box-shadow: 0 0 0 4px rgba(15, 185, 138, .18) !important; }
+
+/* ─── Menu compact (PC): icônes, s'ouvre au survol ─── */
+@media (min-width: 961px) {
+  #app { padding-left: 86px; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0; height: 100vh; width: 86px; overflow: hidden;
+    background: linear-gradient(180deg, #0d1a3a, #060d20); border-right: 0;
+    transition: width .22s ease, box-shadow .22s ease; z-index: 90;
+  }
+  .sidebar:hover { width: 268px; box-shadow: 18px 0 60px rgba(0, 0, 0, .35); }
+  .sidebar .brand { padding: 18px 16px; white-space: nowrap; }
+  .sidebar .brand-text, .sidebar .nav-item span, .sidebar .userbox-info, .sidebar .logout span, .sidebar .nav-group {
+    opacity: 0; transition: opacity .15s; white-space: nowrap;
+  }
+  .sidebar:hover .brand-text, .sidebar:hover .nav-item span, .sidebar:hover .userbox-info,
+  .sidebar:hover .logout span, .sidebar:hover .nav-group { opacity: 1; }
+  .sidebar .nav-group { height: 18px; overflow: hidden; }
+  .sidebar .nav-item { border-radius: 16px; margin: 4px 14px; padding: 12px 15px; white-space: nowrap; }
+  .sidebar .nav-item i { width: 24px; text-align: center; flex: none; }
+  .sidebar .nav-item.active { background: linear-gradient(135deg, #0fb98a, #0a8f6c); box-shadow: 0 8px 22px rgba(15, 185, 138, .38); }
+  .sidebar .userbox { margin: 10px 14px; white-space: nowrap; }
+  .sidebar .logout { margin: 0 14px 16px; white-space: nowrap; }
+  .topbar { margin: 14px 24px 20px; border: 1px solid var(--border); border-radius: 22px; box-shadow: var(--shadow-sm); padding: 10px 18px; top: 12px; }
+}
+.sidebar-logo, .logo-sm, .auth-logo-big { object-fit: contain; border-radius: 12px; }
+.sidebar-logo { width: 50px; height: 50px; }
+
+/* ─── Onglets du trajet: commutateur pro, « Dessiner mon trajet » à gauche ─── */
+.trip-tabs { display: inline-flex; max-width: 100%; gap: 4px; padding: 5px; border-radius: 16px; background: var(--bg2); border: 1px solid var(--border); margin: 0 0 18px; }
+.trip-tab { position: relative; padding: 11px 22px; border-radius: 12px; font-weight: 700; font-size: 14.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 9px; transition: .15s; white-space: nowrap; }
+.trip-tab:hover { color: var(--text); }
+.trip-tab.active { background: var(--surface); color: var(--brand); box-shadow: 0 6px 16px rgba(18, 38, 74, .14); }
+.trip-tab.active::after { content: ""; position: absolute; left: 22px; right: 22px; bottom: 4px; height: 3px; border-radius: 3px; background: var(--brand); }
+.ed-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 14px 22px; border-bottom: 1px solid var(--border); }
+.ed-search { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 260px; background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 4px 6px 4px 14px; }
+.ed-search i { color: var(--muted); }
+.ed-search input { flex: 1; border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 8px 4px; color: var(--text); }
+.ed-toggle { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; cursor: pointer; }
+.ed-toggle input { width: 18px; height: 18px; accent-color: var(--brand); }
+.ed-stats { display: flex; gap: 14px; margin-inline-start: auto; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
+.ed-stats b { color: var(--text); font-size: 16px; }
+.ed-map { cursor: crosshair; }
+.ed-help { padding: 14px 22px; font-size: 13.5px; color: var(--muted); line-height: 1.7; border-top: 1px solid var(--border); background: var(--surface2); }
+.ed-pin { width: 34px; height: 34px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: grid; place-items: center; background: #3b82f6; border: 3px solid #fff; box-shadow: 0 6px 14px rgba(0, 0, 0, .4); }
+.ed-pin span { transform: rotate(45deg); color: #fff; font-weight: 800; font-size: 13px; }
+.ed-pin.start { background: #10b981; } .ed-pin.end { background: #ef4444; }
+
+/* ─── Carte en mode sombre (tuiles OpenStreetMap inversées) ─── */
+[data-theme="dark"] .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.92) saturate(.75); }
+[data-theme="dark"] .leaflet-container { background: #0b1220; }
+
+@media (max-width: 520px) { .trip-tabs { display: flex; width: 100%; } .trip-tab { flex: 1; justify-content: center; padding: 11px 8px; } }
+
+/* ══════════ Téléphone / petite fenêtre (≤ 960px): barre de menu en BAS, style application ══════════ */
+@media (max-width: 960px) {
+  #app { padding: 0 0 84px !important; display: block !important; }
+  #app .sidebar {
+    position: fixed !important; inset: auto 0 0 0 !important; top: auto !important; transform: none !important;
+    width: 100% !important; height: 72px !important; max-height: none !important; z-index: 100 !important; box-sizing: border-box !important;
+    display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: stretch !important;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom)) !important; margin: 0 !important; border-radius: 0 !important; overflow: hidden !important;
+    background: rgba(7, 14, 33, .96) !important; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    border: 0 !important; border-top: 1px solid rgba(255, 255, 255, .1) !important; box-shadow: 0 -12px 34px rgba(0, 0, 0, .35) !important;
+  }
+  #app .sidebar .brand, #app .sidebar .userbox, #app .sidebar .nav-group, #app #burger { display: none !important; }
+  #app .sidebar .menu { display: flex !important; flex-direction: row !important; flex: 1 1 0; min-width: 0; gap: 4px; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+  #app .sidebar .nav-item {
+    flex: 1 1 0; min-width: 0; margin: 0 !important; padding: 6px 2px !important; border-radius: 16px !important; box-shadow: none !important;
+    display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 4px;
+    color: #8da3c4 !important; background: transparent !important; font-weight: 700; transition: .15s;
+  }
+  #app .sidebar .nav-item i { font-size: 19px !important; width: auto !important; margin: 0 !important; }
+  #app .sidebar .nav-item span { display: block !important; opacity: 1 !important; max-width: 100%; font-size: 10.5px !important; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #app .sidebar .nav-item.active { color: #2fd3a3 !important; background: rgba(20, 201, 154, .16) !important; }
+  #app .sidebar .nav-item.active i { filter: drop-shadow(0 0 8px rgba(47, 211, 163, .6)); }
+  #app .sidebar .logout {
+    flex: none; width: 54px; margin: 0 0 0 4px !important; padding: 0 !important; border-radius: 16px !important;
+    display: flex !important; align-items: center; justify-content: center; color: #ff8b8b !important; background: rgba(239, 68, 68, .1) !important; border: 0 !important;
+  }
+  #app .sidebar .logout span { display: none !important; }
+  #app .main { margin: 0 !important; width: 100% !important; }
+  #app .topbar { margin: 10px 12px 14px !important; }
+  #app .client-live-banner { display: flex; flex-wrap: nowrap !important; overflow-x: auto; gap: 8px; padding: 8px 12px; scrollbar-width: none; }
+  #app .client-live-banner::-webkit-scrollbar { display: none; }
+  #app .client-live-banner .cl-item { flex: none; white-space: nowrap; }
+  #helpBtn { bottom: 88px !important; }
+}
+
+/* ══════════ PC: menu compact — indicateur de page active propre (tuile + barre), plus de "cercle" ══════════ */
+@media (min-width: 961px) {
+  #app .sidebar .menu { display: flex !important; flex-direction: column !important; flex: 1 1 auto; overflow-y: auto; }
+  #app .sidebar .nav-item { display: flex !important; align-items: center !important; position: relative; border-radius: 16px !important; color: #8da3c4 !important; background: transparent !important; box-shadow: none !important; transition: background .15s, color .15s; }
+  #app .sidebar .nav-item:hover { background: rgba(255, 255, 255, .07) !important; color: #fff !important; }
+  #app .sidebar .nav-item.active { background: rgba(20, 201, 154, .17) !important; color: #2fd3a3 !important; }
+  #app .sidebar .nav-item.active::before { content: ""; position: absolute; left: -14px; top: 50%; width: 4px; height: 28px; margin-top: -14px; border-radius: 0 4px 4px 0; background: #2fd3a3; box-shadow: 0 0 14px rgba(47, 211, 163, .8); }
+  #app .sidebar .nav-item.active i { filter: drop-shadow(0 0 8px rgba(47, 211, 163, .55)); }
+  /* menu fermé: chaque bouton = une tuile 56×52 centrée, icône au milieu */
+  #app .sidebar:not(:hover) .nav-item { width: 56px !important; height: 52px !important; margin: 6px auto !important; padding: 0 !important; justify-content: center !important; gap: 0 !important; }
+  #app .sidebar:not(:hover) .nav-item i { width: auto !important; margin: 0 !important; font-size: 19px !important; }
+  #app .sidebar:not(:hover) .nav-item span { display: none !important; }
+  /* menu ouvert (survol) */
+  #app .sidebar:hover .nav-item { margin: 5px 14px !important; padding: 13px 16px !important; gap: 14px; }
+  #app .sidebar .menu { overflow-x: hidden !important; }
+}

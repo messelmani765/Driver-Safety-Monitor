@@ -1,0 +1,362 @@
+﻿<!doctype html>
+<html lang="fr" dir="ltr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1428">
+<meta name="description" content="Driver Safety Monitor — Surveillance intelligente de la somnolence au volant. Détection IA en temps réel, alertes automatiques, suivi GPS.">
+<link rel="icon" href="/brand-logo">
+<title>Driver Safety Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/vendor/fa/css/all.min.css">
+<link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="/static/app.css?v=10162358">
+<link rel="stylesheet" href="/static/theme.css?v=4">
+<link rel="stylesheet" href="/static/login.css?v=1">
+<link rel="stylesheet" href="/static/fixes.css?v=10202321">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE DE CONNEXION / INSCRIPTION — grand écran (login.css)
+     Les id (clientUser, clientPass, tabClientBtn...) sont utilisés par app.js: ne pas les changer.
+     ═══════════════════════════════════════════════════════ -->
+<div id="authScreen" class="auth-screen">
+
+  <!-- Côté gauche : présentation -->
+  <section class="lg-hero">
+    <div class="lg-logo-wrap"><img src="/brand-logo" alt="Driver Safety Monitor" class="lg-logo auth-logo-big"></div>
+    <h2 class="lg-title">Driver <span>Safety</span> Monitor</h2>
+    <p class="lg-slogan">Surveillance intelligente de la somnolence au volant grâce à l'intelligence artificielle</p>
+
+    <div class="lg-feats">
+      <div class="lg-feat">
+        <div class="lg-feat-ico"><i class="fa-solid fa-brain"></i></div>
+        <div>
+          <h4>Détection IA en temps réel</h4>
+          <p>Analyse continue des yeux par vision par ordinateur. Alerte dès 5 secondes de fermeture.</p>
+        </div>
+      </div>
+      <div class="lg-feat">
+        <div class="lg-feat-ico"><i class="fa-solid fa-phone-volume"></i></div>
+        <div>
+          <h4>Alerte et appel d'urgence automatiques</h4>
+          <p>Compte à rebours de 10 s, puis appel simulé des secours avec rapport vocal automatique.</p>
+        </div>
+      </div>
+      <div class="lg-feat">
+        <div class="lg-feat-ico"><i class="fa-solid fa-map-location-dot"></i></div>
+        <div>
+          <h4>Suivi du trajet en direct</h4>
+          <p>Carte en temps réel avec position GPS, vitesse et historique de trajet.</p>
+        </div>
+      </div>
+    </div>
+    <div class="lg-foot"><i class="fa-solid fa-shield-halved"></i> Projet de simulation — aucun appel réel n'est passé</div>
+  </section>
+
+  <!-- Côté droit : formulaires -->
+  <section class="lg-panel">
+    <div class="lg-panel-inner">
+      <div class="lg-head">
+        <h1>Bienvenue</h1>
+        <p>Connectez-vous à votre espace sécurisé</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="tabClientBtn">
+          <i class="fa-solid fa-user"></i>
+          <span class="tab-text">Espace Client</span>
+        </button>
+        <button type="button" class="auth-tab" id="tabSuperBtn">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span class="tab-text">Espace Police</span>
+        </button>
+      </div>
+
+      <!-- ── Panneau Client ── -->
+      <div class="auth-panel active" id="panelClient">
+        <div class="auth-notice">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>Accédez à votre tableau de bord, trajet, alertes et détections personnels.</span>
+        </div>
+
+        <form id="formLoginClient" class="auth-form" onsubmit="return false;">
+          <div class="field">
+            <label for="clientUser"><i class="fa-solid fa-user"></i> Identifiant ou Email</label>
+            <div class="field-wrap">
+              <i class="field-icon fa-solid fa-at"></i>
+              <input id="clientUser" type="text" placeholder="ex: client1 ou ahmed@safety.tn" autocomplete="username" required>
+            </div>
+          </div>
+          <div class="field">
+            <label for="clientPass"><i class="fa-solid fa-lock"></i> Mot de passe</label>
+            <div class="field-wrap">
+              <i class="field-icon fa-solid fa-lock"></i>
+              <input id="clientPass" type="password" placeholder="••••••••" autocomplete="current-password" required>
+              <button type="button" class="field-eye" id="toggleClientPass" aria-label="Afficher/masquer">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <label class="auth-remember">
+            <input type="checkbox" id="clientRemember"> Se souvenir de moi
+          </label>
+          <div id="clientLoginError" class="field-error"></div>
+          <button type="submit" class="btn wide auth-submit" id="btnSubmitClient">
+            <i class="fa-solid fa-right-to-bracket"></i> Se connecter
+          </button>
+        </form>
+
+        <div class="auth-demo-box">
+          <span>Compte démo :</span>
+          <button type="button" class="btn sm gray" id="btnFillDemoClient">
+            <i class="fa-solid fa-key"></i> client1 / client123
+          </button>
+        </div>
+
+        <div class="auth-divider"><span>NOUVEAU CONDUCTEUR</span></div>
+
+        <div class="auth-buy-card">
+          <div class="buy-info">
+            <b>Acheter le service de surveillance</b>
+            <span class="sim-badge"><i class="fa-solid fa-check"></i> Paiement simulé</span>
+          </div>
+          <p>Inscrivez-vous, liez votre véhicule et obtenez votre code de détection webcam instantanément.</p>
+          <button type="button" class="btn wide" id="btnOpenRegister">
+            <i class="fa-solid fa-cart-shopping"></i> Créer mon compte / Acheter le service
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Panneau Police ── -->
+      <div class="auth-panel" id="panelSuper">
+        <div class="auth-notice police">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span><b>Poste de commandement Police &amp; Protection civile.</b> Accès restreint aux agents autorisés.</span>
+        </div>
+
+        <form id="formLoginSuper" class="auth-form" onsubmit="return false;">
+          <div class="field">
+            <label for="superUser"><i class="fa-solid fa-id-badge"></i> Identifiant Police</label>
+            <div class="field-wrap">
+              <i class="field-icon fa-solid fa-shield-halved"></i>
+              <input id="superUser" type="text" placeholder="ex: police" autocomplete="username" required>
+            </div>
+          </div>
+          <div class="field">
+            <label for="superPass"><i class="fa-solid fa-lock"></i> Mot de passe</label>
+            <div class="field-wrap">
+              <i class="field-icon fa-solid fa-lock"></i>
+              <input id="superPass" type="password" placeholder="••••••••" autocomplete="current-password" required>
+              <button type="button" class="field-eye" id="toggleSuperPass" aria-label="Afficher/masquer">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div id="superLoginError" class="field-error"></div>
+          <button type="submit" class="btn blue wide auth-submit" id="btnSubmitSuper">
+            <i class="fa-solid fa-shield-halved"></i> Connexion Salle de Contrôle
+          </button>
+        </form>
+
+        <div class="auth-demo-box">
+          <span>Compte démo superviseur :</span>
+          <button type="button" class="btn sm gray" id="btnFillDemoSuper">
+            <i class="fa-solid fa-key"></i> police / police123
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     APPLICATION AUTHENTIFIÉE
+     ═══════════════════════════════════════════════════════ -->
+<div id="app" style="display:none">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <img src="/brand-logo" alt="Logo" class="sidebar-logo">
+      <div class="brand-text">
+        <div class="brand-name">DRIVER <span>SAFETY</span> MONITOR</div>
+        <div class="role-pill" id="rolePill">CONDUCTEUR</div>
+      </div>
+    </div>
+    <nav class="menu" id="nav"></nav>
+    <div class="userbox" id="userBox">
+      <div class="avatar" id="userAvatar">U</div>
+      <div class="userbox-info">
+        <b id="userName">Utilisateur</b>
+        <small id="userRoleDetail">Rôle</small>
+      </div>
+    </div>
+    <button class="logout" id="logoutBtn">
+      <i class="fa-solid fa-right-from-bracket"></i> <span>Déconnexion</span>
+    </button>
+  </aside>
+
+  <!-- Zone principale -->
+  <div class="main" id="main">
+    <!-- Son désactivé -->
+    <div id="soundBar">
+      <span><i class="fa-solid fa-volume-xmark"></i> Le son est désactivé — les alertes ne seront pas audibles</span>
+      <button id="soundBtn"><i class="fa-solid fa-volume-high"></i> ACTIVER LE SON</button>
+    </div>
+
+    <!-- Bandeau temps réel client -->
+    <div id="clientLiveBanner" class="client-live-banner" style="display:none">
+      <div class="cl-item"><i class="fa-solid fa-car"></i><span>Voiture : <b id="clCarCode">—</b> (<span id="clPlate">—</span>)</span></div>
+      <div class="cl-item"><span class="status-dot-sm" id="clOnlineDot"></span><span id="clOnlineText">Hors ligne</span></div>
+      <div class="cl-item"><i class="fa-solid fa-eye"></i><span>État : <b id="clState">Yeux ouverts</b></span></div>
+      <div class="cl-item"><i class="fa-solid fa-gauge-high"></i><span>Vitesse : <b id="clSpeed">0</b> km/h</span></div>
+    </div>
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="title-pill">
+        <button class="icon-btn burger" id="burger" aria-label="menu"><i class="fa-solid fa-bars"></i></button>
+        <span id="pageTitle">Dashboard</span>
+      </div>
+      <div class="spacer"></div>
+      <div class="top-actions">
+        <span id="conn" class="conn">…</span>
+        <button class="icon-btn" id="bellBtn" aria-label="notifications"><i class="fa-solid fa-bell"></i><span id="bellDot"></span></button>
+        <button class="icon-btn" id="themeBtn" aria-label="thème"><i class="fa-solid fa-moon"></i></button>
+        <button class="icon-btn" id="helpBtn2" aria-label="aide" style="position:static"><i class="fa-solid fa-circle-question"></i></button>
+      </div>
+    </header>
+
+    <main id="view"></main>
+  </div>
+</div>
+
+<!-- Bouton aide fixe -->
+<button id="helpBtn" aria-label="Aide"><i class="fa-solid fa-circle-question"></i></button>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Modal -->
+<div id="modalOverlay"><div id="modal" class="modal"></div></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     ALERTE PLEIN ÉCRAN (Client endormi)
+     ═══════════════════════════════════════════════════════ -->
+<div id="alertOverlay">
+  <div class="al-wrap">
+    <h1><i class="fa-solid fa-triangle-exclamation"></i> <span id="alTitle">CONDUCTEUR ENDORMI</span></h1>
+    <div id="alSub" class="al-sub"></div>
+    <img id="alImg" class="al-img" alt="Capture webcam">
+    <div class="al-info">
+      <b class="plate" id="alPlate">—</b>
+      <span><i class="fa-solid fa-user"></i> <span id="alDriver">—</span></span>
+      <span><i class="fa-regular fa-clock"></i> <span id="alTime">—</span> &nbsp; <i class="fa-solid fa-location-dot"></i> <span id="alPos">—</span></span>
+    </div>
+    <div class="al-countdown-wrap">
+      <div class="al-countdown" id="alCountdown" style="--pct:100%">
+        <span id="alCountNum">10</span>
+      </div>
+    </div>
+    <div id="alCount" style="font-size:14px;opacity:.8"></div>
+    <div id="alQueue" style="font-size:13px;opacity:.75"></div>
+    <div class="al-btns">
+      <button class="btn white" id="alAwake" style="font-size:17px;padding:16px 30px">
+        <i class="fa-solid fa-hand"></i> Je suis réveillé
+      </button>
+      <button class="btn dark" id="alStop"><i class="fa-solid fa-volume-xmark"></i> Arrêter l'alarme</button>
+      <button class="btn dark" id="alMap"><i class="fa-solid fa-map-location-dot"></i> Voir sur la carte</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     APPEL SIMULÉ (côté conducteur)
+     ═══════════════════════════════════════════════════════ -->
+<div id="callOverlay">
+  <div class="call">
+    <span class="sim-tag">SIMULATION — aucun appel réel</span>
+    <div class="avatar"><i class="fa-solid fa-phone-volume"></i></div>
+    <div class="call-who" id="callWho">Protection civile (simulé)</div>
+    <div class="call-num" id="callNum">+216 00 000 000</div>
+    <div class="wave-wrap" id="callWave" style="display:none">
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+    </div>
+    <div class="call-timer" id="callTimer">00:00</div>
+    <div class="call-msg" id="callSay"></div>
+    <button class="btn red" id="callEnd"><i class="fa-solid fa-phone-slash"></i> Raccrocher</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     DISPATCH POLICE (appel entrant / intervention)
+     ═══════════════════════════════════════════════════════ -->
+<div id="policeDispatchOverlay" class="dispatch-overlay">
+  <div class="dispatch-card">
+    <div class="dispatch-head">
+      <div class="dispatch-badge">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        ALERTE POLICE — URGENCE EN COURS
+      </div>
+      <button class="dispatch-close" id="btnDispatchClose" aria-label="Fermer">&times;</button>
+    </div>
+    <div class="dispatch-body">
+      <div>
+        <div class="dispatch-media">
+          <img id="dispatchImg" src="" alt="Capture conducteur">
+          <div class="dispatch-status-tag" id="dispatchStatusTag">Conducteur Endormi</div>
+        </div>
+        <div style="margin-top:12px">
+          <div id="dispatchSpeechWrap" style="display:none">
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;text-align:center">Rapport vocal en cours…</div>
+            <div class="wave-wrap">
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div>
+            </div>
+          </div>
+          <div id="dispatchTranscript" style="font-size:12px;color:#94a3b8;line-height:1.5;margin-top:8px;font-style:italic"></div>
+        </div>
+      </div>
+      <div class="dispatch-info">
+        <h3 id="dispatchDriverName">—</h3>
+        <div class="dispatch-grid">
+          <div><small>CIN (fictif)</small><b id="dispatchCin">—</b></div>
+          <div><small>Téléphone</small><b id="dispatchPhone">—</b></div>
+          <div><small>Véhicule</small><b id="dispatchPlate">—</b></div>
+          <div><small>Code véhicule</small><b id="dispatchCode">—</b></div>
+          <div><small>Vitesse</small><b id="dispatchSpeed">—</b></div>
+          <div><small>Position GPS</small><b id="dispatchGps">—</b></div>
+          <div><small>Contact d'urgence</small><b id="dispatchEmergency">—</b></div>
+          <div><small>Yeux fermés</small><b id="dispatchEyes">—</b></div>
+        </div>
+        <div id="dispatchAddrLine" style="font-size:12px;color:#94a3b8;margin-bottom:14px;display:flex;align-items:center;gap:6px">
+          <i class="fa-solid fa-location-dot" style="color:#f87171"></i>
+          <span id="dispatchAddr">Géolocalisation en cours…</span>
+        </div>
+        <div class="dispatch-actions">
+          <button class="btn green" id="btnDispatchRespond"><i class="fa-solid fa-phone"></i> Répondre</button>
+          <button class="btn blue" id="btnDispatchSendUnit"><i class="fa-solid fa-truck-medical"></i> Envoyer une unité</button>
+          <button class="btn gray" id="btnDispatchCloseAlert"><i class="fa-solid fa-circle-check"></i> Clôturer</button>
+        </div>
+        <div style="margin-top:10px">
+          <button class="btn sm gray" id="btnDispatchRelisten" style="display:none"><i class="fa-solid fa-rotate-left"></i> Réécouter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/vendor/leaflet/leaflet.js"></script>
+<script src="/static/vendor/chart.umd.js"></script>
+<script src="/static/extras.js?v=1"></script>
+<script src="/static/app.js?v=10222317"></script>
+<script src="/static/trip-editor.js?v=4"></script>
+</body>
+</html>

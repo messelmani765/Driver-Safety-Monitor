@@ -1,0 +1,17 @@
+[build]
+  publish = "drowsiness-system-v3/server/static"
+
+[[redirects]]
+  from = "/static/*"
+  to = "/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/brand-logo"
+  to = "/logo.svg"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

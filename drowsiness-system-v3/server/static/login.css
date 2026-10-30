@@ -1,0 +1,146 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Driver Safety Monitor — PAGE DE CONNEXION sombre, moderne, qui tient dans l'écran
+   (tailles en vh: pas besoin de Ctrl -). Chargé après app.css et theme.css.
+   ══════════════════════════════════════════════════════════════════════ */
+#authScreen {
+  --brand: #14c99a; --brand-d: #0a8f6c; --ink: #eaf1fc; --muted: #8da3c4; --line: rgba(255,255,255,.12);
+  --field: rgba(4, 11, 28, .62); --field-line: #233b66;
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; align-items: stretch;
+  width: 100%; height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink);
+  background:
+    radial-gradient(900px 640px at 8% 6%, rgba(20, 201, 154, .30), transparent 62%),
+    radial-gradient(900px 700px at 96% 94%, rgba(59, 130, 246, .30), transparent 62%),
+    radial-gradient(600px 400px at 70% 10%, rgba(139, 92, 246, .14), transparent 60%),
+    linear-gradient(160deg, #0a1838 0%, #050b1c 72%);
+  scrollbar-width: thin; scrollbar-color: #26406e transparent;
+}
+#authScreen::before {                       /* grille discrète sur toute la page */
+  content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .55;
+  background-image: linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 54px 54px;
+  -webkit-mask-image: radial-gradient(ellipse at 40% 50%, #000 25%, transparent 80%); mask-image: radial-gradient(ellipse at 40% 50%, #000 25%, transparent 80%);
+}
+#authScreen *, #authScreen *::before, #authScreen *::after { box-sizing: border-box; }
+
+/* ═════════ Gauche: présentation ═════════ */
+#authScreen .lg-hero {
+  position: relative; z-index: 1; flex: 1.1 1 0; min-width: 0; min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+  padding: clamp(18px, 4vh, 48px) clamp(24px, 4vw, 80px);
+}
+#authScreen .lg-logo-wrap { position: relative; width: clamp(96px, 20vh, 170px); height: clamp(96px, 20vh, 170px); display: grid; place-items: center; margin-bottom: clamp(12px, 3vh, 28px); }
+#authScreen .lg-logo-wrap::before, #authScreen .lg-logo-wrap::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(47,211,163,.5); animation: lgPulse 3.2s ease-out infinite; }
+#authScreen .lg-logo-wrap::after { animation-delay: 1.6s; }
+#authScreen .lg-logo { width: 78%; height: 78%; object-fit: contain; border-radius: 28%; filter: drop-shadow(0 18px 40px rgba(20,201,154,.5)); }
+@keyframes lgPulse { 0% { transform: scale(.66); opacity: .9; } 100% { transform: scale(1.2); opacity: 0; } }
+#authScreen .lg-title { margin: 0; font-size: clamp(32px, min(4.2vw, 7.4vh), 64px); line-height: 1.05; font-weight: 900; letter-spacing: -2px; color: #fff; }
+#authScreen .lg-title span { background: linear-gradient(90deg, #2fd3a3, #60a5fa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+#authScreen .lg-slogan { margin: clamp(8px, 1.8vh, 16px) 0 0; max-width: 600px; font-size: clamp(14px, 2.1vh, 19px); line-height: 1.5; color: #a3b6d4; }
+#authScreen .lg-feats { width: 100%; max-width: 600px; margin-top: clamp(16px, 4vh, 40px); display: grid; gap: clamp(8px, 1.4vh, 13px); text-align: left; }
+#authScreen .lg-feat { display: flex; align-items: center; gap: 16px; padding: clamp(10px, 1.9vh, 17px) 20px; border-radius: 20px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.11); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); transition: transform .2s, border-color .2s, background .2s; }
+#authScreen .lg-feat:hover { transform: translateX(6px); background: rgba(255,255,255,.09); border-color: rgba(47,211,163,.5); }
+#authScreen .lg-feat-ico { flex: none; width: clamp(40px, 6vh, 54px); height: clamp(40px, 6vh, 54px); border-radius: 16px; display: grid; place-items: center; font-size: clamp(17px, 2.6vh, 23px); color: #fff; background: linear-gradient(135deg, #14c99a, #0a8f6c); box-shadow: 0 10px 22px rgba(20,201,154,.38); }
+#authScreen .lg-feat h4 { margin: 0 0 3px; font-size: clamp(14px, 2.1vh, 17px); font-weight: 800; color: #fff; }
+#authScreen .lg-feat p { margin: 0; font-size: clamp(12px, 1.7vh, 14px); line-height: 1.45; color: #9fb2d0; }
+#authScreen .lg-foot { margin-top: clamp(10px, 2.6vh, 26px); font-size: 12.5px; color: #6f86a8; display: inline-flex; align-items: center; gap: 8px; }
+#authScreen .lg-foot i { color: #2fd3a3; }
+
+/* ═════════ Droite: carte en verre sombre ═════════ */
+#authScreen .lg-panel { position: relative; z-index: 1; flex: 1 1 0; min-width: 500px; max-width: 760px; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: clamp(12px, 2.6vh, 32px) clamp(18px, 3vw, 56px); background: none; }
+#authScreen .lg-panel-inner {
+  width: 100%; max-width: 540px; padding: clamp(16px, 3.2vh, 38px) clamp(20px, 2.6vw, 38px); border-radius: 30px;
+  background: linear-gradient(180deg, rgba(20,34,70,.78), rgba(10,19,44,.82));
+  border: 1px solid rgba(255,255,255,.12); -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px);
+  box-shadow: 0 40px 100px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);
+}
+#authScreen .lg-head { text-align: center; margin-bottom: clamp(10px, 2.2vh, 24px); }
+#authScreen .lg-head h1 { margin: 0; font-size: clamp(26px, 4.6vh, 38px); font-weight: 900; letter-spacing: -1px; color: #fff; }
+#authScreen .lg-head p { margin: 5px 0 0; font-size: clamp(13px, 1.9vh, 15.5px); color: var(--muted); }
+
+#authScreen .auth-tabs { display: flex; gap: 5px; padding: 5px; margin: 0 0 clamp(10px, 2vh, 20px); background: rgba(3,9,24,.55); border: 1px solid var(--line); border-radius: 18px; }
+#authScreen .auth-tab { flex: 1; height: clamp(40px, 5.6vh, 52px); border: 0; border-radius: 13px; cursor: pointer; background: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 9px; font: 700 clamp(13px, 1.9vh, 15.5px)/1 "Inter", system-ui, sans-serif; color: var(--muted); transition: .18s; }
+#authScreen .auth-tab:hover { color: #fff; }
+#authScreen .auth-tab.active { color: #fff; background: linear-gradient(135deg, #14c99a, #0a8f6c); box-shadow: 0 8px 20px rgba(20,201,154,.35); }
+#authScreen .auth-panel { display: none; }
+#authScreen .auth-panel.active { display: block; animation: lgIn .25s ease; }
+@keyframes lgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+#authScreen .auth-notice { display: flex; gap: 11px; align-items: flex-start; padding: clamp(8px, 1.5vh, 14px) 16px; margin-bottom: clamp(10px, 2vh, 20px); border-radius: 14px; font-size: clamp(12px, 1.75vh, 14px); line-height: 1.45; color: #7ee9c6; background: rgba(20,201,154,.10); border: 1px solid rgba(20,201,154,.28); }
+#authScreen .auth-notice.police { color: #9cc2ff; background: rgba(59,130,246,.12); border-color: rgba(96,165,250,.32); }
+#authScreen .auth-notice i { margin-top: 2px; }
+
+/* Champs: icône à gauche, texte après l'icône */
+#authScreen .auth-form .field { margin: 0 0 clamp(9px, 1.8vh, 17px); }
+#authScreen .auth-form .field > label { display: flex; align-items: center; gap: 8px; margin: 0 0 clamp(5px, .9vh, 8px); font-size: clamp(12px, 1.75vh, 14px); font-weight: 700; color: #cbd8ee; }
+#authScreen .auth-form .field > label i { color: var(--muted); font-size: 13px; }
+#authScreen .field-wrap { position: relative; display: block; width: 100%; }
+#authScreen .field-wrap .field-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); width: 20px; text-align: center; font-size: 16px; color: #6f89b3; pointer-events: none; z-index: 2; }
+#authScreen .field-wrap input {
+  display: block; width: 100%; height: clamp(42px, 6vh, 56px); margin: 0; padding: 0 54px 0 52px !important;
+  font: 600 clamp(14px, 2vh, 16px)/1 "Inter", system-ui, sans-serif; color: #fff !important;
+  background: var(--field) !important; border: 1.5px solid var(--field-line) !important; border-radius: 16px !important; box-shadow: none; outline: none; transition: border-color .15s, box-shadow .15s;
+}
+#authScreen .field-wrap input::placeholder { color: #5f7aa5; font-weight: 500; }
+#authScreen .field-wrap input:focus { border-color: var(--brand) !important; box-shadow: 0 0 0 4px rgba(20,201,154,.18) !important; }
+#authScreen .field-wrap:focus-within .field-icon { color: var(--brand); }
+#authScreen .field-wrap input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px #0b1936 inset; -webkit-text-fill-color: #fff; caret-color: #fff; }
+#authScreen .field-eye { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 2; width: 40px; height: 40px; border: 0; border-radius: 12px; cursor: pointer; background: transparent; color: #7d94b8; font-size: 16px; }
+#authScreen .field-eye:hover { background: rgba(255,255,255,.08); color: #fff; }
+#authScreen .auth-remember { display: flex; align-items: center; gap: 10px; margin: 0 0 clamp(9px, 1.8vh, 16px); font-size: clamp(12px, 1.75vh, 14px); color: var(--muted); cursor: pointer; }
+#authScreen .auth-remember input { width: 18px; height: 18px; accent-color: var(--brand); }
+#authScreen .field-error:empty { display: none; }
+#authScreen .field-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; font-size: 13.5px; font-weight: 600; color: #ffb4a9; background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.35); }
+
+#authScreen .btn { font-family: inherit; cursor: pointer; border: 0; }
+#authScreen .auth-submit { display: flex; align-items: center; justify-content: center; gap: 11px; width: 100%; height: clamp(46px, 6.6vh, 58px); padding: 0 20px; border-radius: 16px; font: 800 clamp(14px, 2vh, 16px)/1 "Inter", system-ui, sans-serif; color: #fff; background: linear-gradient(135deg, #14c99a, #0a8f6c); box-shadow: 0 12px 28px rgba(20,201,154,.36); transition: transform .15s, box-shadow .15s; }
+#authScreen .auth-submit.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 12px 28px rgba(59,130,246,.38); }
+#authScreen .auth-submit:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(20,201,154,.46); }
+#authScreen .auth-submit.blue:hover { box-shadow: 0 16px 34px rgba(59,130,246,.48); }
+#authScreen .auth-submit:disabled { opacity: .7; cursor: wait; }
+
+#authScreen .auth-demo-box { margin-top: clamp(9px, 1.8vh, 16px); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: clamp(6px, 1.1vh, 10px) 14px; border-radius: 15px; background: rgba(255,255,255,.04); border: 1.5px dashed rgba(255,255,255,.18); font-size: clamp(12px, 1.75vh, 14px); color: var(--muted); }
+#authScreen .auth-demo-box .btn { height: clamp(34px, 4.8vh, 42px); padding: 0 14px; border-radius: 12px; font-weight: 700; font-size: clamp(12px, 1.75vh, 14px); color: #fff; background: rgba(255,255,255,.1); box-shadow: none; display: inline-flex; align-items: center; gap: 8px; }
+#authScreen .auth-demo-box .btn:hover { background: rgba(255,255,255,.18); transform: none; }
+
+#authScreen .auth-divider { display: flex; align-items: center; gap: 12px; margin: clamp(10px, 2.2vh, 22px) 0 clamp(8px, 1.6vh, 16px); font-size: 11px; font-weight: 800; letter-spacing: 1.6px; color: #6f86a8; }
+#authScreen .auth-divider::before, #authScreen .auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+#authScreen .auth-buy-card { padding: clamp(11px, 2vh, 20px); border-radius: 20px; background: linear-gradient(135deg, rgba(20,201,154,.12), rgba(59,130,246,.12)); border: 1px solid rgba(255,255,255,.12); }
+#authScreen .buy-info { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+#authScreen .buy-info b { font-size: clamp(14px, 2vh, 16.5px); color: #fff; }
+#authScreen .sim-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #7ee9c6; background: rgba(20,201,154,.16); }
+#authScreen .auth-buy-card p { margin: 0 0 clamp(8px, 1.6vh, 14px); font-size: clamp(12px, 1.7vh, 13.5px); line-height: 1.5; color: var(--muted); }
+#authScreen #btnOpenRegister { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: clamp(42px, 5.8vh, 52px); border-radius: 15px; font: 800 clamp(13px, 1.9vh, 15px)/1 "Inter", system-ui, sans-serif; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); box-shadow: none; transition: .15s; }
+#authScreen #btnOpenRegister:hover { background: rgba(255,255,255,.18); transform: translateY(-1px); }
+
+/* Écrans bas (portables): on garde l'essentiel pour tout voir sans défiler */
+@media (max-height: 940px) {
+  #authScreen .auth-buy-card p, #authScreen .lg-foot { display: none; }
+  #authScreen .lg-panel { padding-top: 8px; padding-bottom: 8px; }
+  #authScreen .lg-panel-inner { padding-top: 14px; padding-bottom: 14px; }
+}
+@media (max-height: 660px) {
+  #authScreen .lg-head p, #authScreen .auth-remember { display: none; }
+  #authScreen .auth-divider { margin: 8px 0; }
+}
+@media (max-height: 790px) {
+  #authScreen .auth-notice, #authScreen .lg-slogan { display: none; }
+  #authScreen .auth-form .field > label i { display: none; }
+}
+@media (max-width: 1180px) { #authScreen .lg-panel { min-width: 460px; } #authScreen .lg-feats { max-width: 520px; } }
+
+/* Téléphone / petite fenêtre */
+@media (max-width: 960px) {
+  #authScreen { flex-direction: column; flex-wrap: nowrap; }
+  #authScreen .lg-hero { flex: none; min-height: 0; padding: 26px 20px 8px; }
+  #authScreen .lg-logo-wrap { width: 92px; height: 92px; margin-bottom: 10px; }
+  #authScreen .lg-feats, #authScreen .lg-foot { display: none; }
+  #authScreen .lg-title { font-size: 28px; }
+  #authScreen .lg-panel { flex: none; min-width: 0; max-width: none; min-height: 0; width: 100%; padding: 12px 14px 32px; }
+  #authScreen .lg-panel-inner { max-width: 560px; }
+  #authScreen .auth-buy-card p, #authScreen .auth-notice, #authScreen .lg-slogan { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #authScreen .lg-logo-wrap::before, #authScreen .lg-logo-wrap::after, #authScreen .auth-panel.active { animation: none; }
+}
