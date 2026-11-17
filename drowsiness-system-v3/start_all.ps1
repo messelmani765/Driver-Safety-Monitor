@@ -1,4 +1,4 @@
-﻿# Lance TOUT le projet dans des fenêtres PowerShell séparées.
+# Lance TOUT le projet dans des fenêtres PowerShell séparées.
 #   .\start_all.ps1                     -> serveur + 3 voitures simulées (sans webcam)
 #   .\start_all.ps1 -Webcam             -> serveur + détecteur avec ta webcam (moteur auto)
 #   .\start_all.ps1 -Esp32 192.168.0.50 -> serveur + détecteur connecté à l'ESP32-CAM

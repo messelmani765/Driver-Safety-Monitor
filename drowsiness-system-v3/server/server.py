@@ -21,6 +21,10 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
+BASE = Path(__file__).resolve().parent
+if str(BASE) not in sys.path:
+    sys.path.insert(0, str(BASE))
+
 import paho.mqtt.client as mqtt
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse, Response
@@ -1375,3 +1379,38 @@ async def ws_endpoint(ws: WebSocket):
         pass
     finally:
         ws_clients.pop(ws, None)
+
+
+if __name__ == "__main__":
+    import socket
+    import uvicorn
+
+    def get_local_ip() -> str:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            s.close()
+            return ip
+        except Exception:
+            return "127.0.0.1"
+
+    local_ip = get_local_ip()
+    port = int(os.environ.get("PORT", "8000"))
+    host = os.environ.get("HOST", "0.0.0.0")
+
+    print("\n" + "=" * 62)
+    print("  🚀 SERVEUR DRIVER SAFETY MONITOR - DÉMARRÉ")
+    print(f"  💻 Local PC        : http://localhost:{port}")
+    print(f"  📱 Téléphone/Réseau: http://{local_ip}:{port}")
+    print(f"  📡 App Flutter     : {local_ip}:{port}")
+    print("=" * 62 + "\n")
+
+    try:
+        uvicorn.run(app, host=host, port=port)
+    except OSError as e:
+        if getattr(e, "winerror", None) == 10048 or "address already in use" in str(e).lower():
+            print(f"\n❌ ERREUR: Le port {port} est déjà utilisé par une autre instance du serveur.")
+            print(f"👉 Fermez la fenêtre ou le terminal qui utilise le port {port} et relancez.")
+        else:
+            raise
