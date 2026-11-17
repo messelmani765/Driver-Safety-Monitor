@@ -22,8 +22,19 @@ from pathlib import Path
 from typing import Optional
 
 BASE = Path(__file__).resolve().parent
+DETECTOR_DIR = BASE.parent / "detector"
 if str(BASE) not in sys.path:
     sys.path.insert(0, str(BASE))
+if str(DETECTOR_DIR) not in sys.path:
+    sys.path.insert(0, str(DETECTOR_DIR))
+
+# Pré-chargement des modules de détection sans avertissement d'importation
+try:
+    import detector_eyes as de  # type: ignore
+    import utils as du          # type: ignore
+except Exception:
+    de = None
+    du = None
 
 import paho.mqtt.client as mqtt
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
@@ -590,10 +601,19 @@ _phone = {"engine": None, "lock": threading.Lock(), "cars": {}}
 
 
 def _phone_modules():
-    if str(DETECTOR_DIR) not in sys.path:
-        sys.path.insert(0, str(DETECTOR_DIR))
-    import detector_eyes as de
-    import utils as du
+    global de, du
+    if de is None or du is None:
+        if str(DETECTOR_DIR) not in sys.path:
+            sys.path.insert(0, str(DETECTOR_DIR))
+        try:
+            import detector_eyes as _de
+            import utils as _du
+            de, du = _de, _du
+        except Exception as e:
+            raise RuntimeError(
+                f"Modules de détection indisponibles: {e}. "
+                "Vérifiez que 'detector/' contient detector_eyes.py et utils.py."
+            )
     return de, du
 
 
@@ -703,6 +723,69 @@ async def api_esp32_proxy(url: str):
                             headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "no-cache"})
     except Exception as e:
         return JSONResponse({"ok": False, "error": f"ESP32-CAM injoignable ({e})"}, status_code=502)
+
+
+@app.get("/api/esp32/torch")
+async def api_esp32_torch(ip: str, state: str = "on"):
+    """Active ou désactive la torche (LED flash GPIO 4) de l'ESP32-CAM."""
+    clean_ip = ip.strip().replace("http://", "").replace("https://", "").split("/")[0].split(":")[0]
+    is_on = state.lower() in ("on", "1", "true")
+    urls = [
+        f"http://{clean_ip}/control?var=led_intensity&val={'255' if is_on else '0'}",
+        f"http://{clean_ip}/control?var=flash&val={'1' if is_on else '0'}",
+        f"http://{clean_ip}/led?val={'1' if is_on else '0'}",
+        f"http://{clean_ip}/torch?val={'1' if is_on else '0'}",
+    ]
+    success = False
+    for target in urls:
+        try:
+            req = urllib.request.Request(target, headers={"User-Agent": "DriverSafety/3.0"})
+            with urllib.request.urlopen(req, timeout=1.5) as resp:
+                if resp.status == 200:
+                    success = True
+                    break
+        except Exception:
+            pass
+    return {"ok": success, "torch": "on" if is_on else "off", "ip": clean_ip}
+
+
+@app.get("/api/esp32/configure")
+async def api_esp32_configure(ip: str, quality: int = 10, framesize: str = "vga", torch: bool = True):
+    """Configure la résolution moyenne (VGA 640x480 / SVGA 800x600), la bonne qualité (quality=10)
+    et active automatiquement la torche / flash LED de l'ESP32-CAM."""
+    clean_ip = ip.strip().replace("http://", "").replace("https://", "").split("/")[0].split(":")[0]
+    # Framesize OV2640: 6=VGA (640x480), 7=SVGA (800x600)
+    fsize_val = "7" if framesize.lower() == "svga" else "6"
+    q_val = str(max(10, min(63, quality)))
+
+    commands = [
+        f"http://{clean_ip}/control?var=framesize&val={fsize_val}",
+        f"http://{clean_ip}/control?var=quality&val={q_val}",
+    ]
+    if torch:
+        commands.extend([
+            f"http://{clean_ip}/control?var=led_intensity&val=255",
+            f"http://{clean_ip}/control?var=flash&val=1",
+            f"http://{clean_ip}/led?val=1",
+        ])
+
+    for cmd in commands:
+        try:
+            req = urllib.request.Request(cmd, headers={"User-Agent": "DriverSafety/3.0"})
+            with urllib.request.urlopen(req, timeout=1.2) as resp:
+                pass
+        except Exception:
+            pass
+
+    return {
+        "ok": True,
+        "ip": clean_ip,
+        "framesize": "SVGA 800x600" if fsize_val == "7" else "VGA 640x480",
+        "quality": int(q_val),
+        "torch": "on" if torch else "off",
+        "stream_url": f"http://{clean_ip}:81/stream",
+        "snapshot_url": f"http://{clean_ip}/cam-hi.jpg"
+    }
 
 
 @app.post("/api/client/frame")
