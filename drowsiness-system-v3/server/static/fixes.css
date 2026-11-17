@@ -17,9 +17,18 @@
   }
 }
 
-/* App mobile conducteur (?app=client): pas d'espace police */
-.app-client .auth-tabs, .app-client #tabSuperBtn, .app-client #panelSuper { display: none !important; }
-.app-client #panelClient { display: block !important; }
+/* Menu et interface responsive identiques sur mobile et bureau */
+@media (max-width: 960px) {
+  #app .sidebar { transition: transform 0.3s ease, width 0.3s ease; }
+  body.menu-open #app .sidebar { transform: translateX(0); z-index: 1000; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+}
+
+/* Styles ESP32-CAM */
+.esp32-cfg { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+.esp32-cfg .field-wrap { flex:1; min-width:240px; }
+.esp32-stream-box { position:relative; width:100%; aspect-ratio:4/3; background:#050b14; border-radius:16px; overflow:hidden; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+.esp32-stream-box img, .esp32-stream-box video, .esp32-stream-box canvas { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.esp32-badge-mode { font-size:11px; padding:3px 10px; border-radius:99px; background:rgba(16,185,129,0.15); color:var(--brand); font-weight:700; }
 
 /* ─── Tableau de bord client ─── */
 .dsh-banner { display:flex; align-items:center; gap:22px; padding:18px 22px; margin-bottom:18px; flex-wrap:wrap; }
@@ -108,8 +117,4 @@ input.error { border-color:var(--red) !important; }
 #camState[data-s=EyesOpen] { color:var(--brand); }
 .cam-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
 
-/* App mobile: interface plus légère (téléphones lents) */
-.app-client *, .app-client *::before, .app-client *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-.app-client .card, .app-client .stat, .app-client .modal { box-shadow: none !important; }
-.app-client .status-dot.on, .app-client .status-dot-sm.on, .app-client .conn.ok::before, .app-client .auth-logo-big, .app-client .lg-hero * { animation: none !important; }
-.app-client .card { transition: none !important; }
+/* Fin des styles */

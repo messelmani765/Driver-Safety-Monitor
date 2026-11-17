@@ -1,11 +1,12 @@
-# Lance TOUT le projet dans des fenêtres PowerShell séparées.
+﻿# Lance TOUT le projet dans des fenêtres PowerShell séparées.
 #   .\start_all.ps1                     -> serveur + 3 voitures simulées (sans webcam)
 #   .\start_all.ps1 -Webcam             -> serveur + détecteur avec ta webcam (moteur auto)
-#   .\start_all.ps1 -Webcam -Engine mediapipe
+#   .\start_all.ps1 -Esp32 192.168.0.50 -> serveur + détecteur connecté à l'ESP32-CAM
 #   .\start_all.ps1 -Vehicles 5 -Fast   -> 5 voitures, scénario court (test rapide)
 # Si Mosquitto n'est pas installé, tout marche quand même (envoi par HTTP).
 param(
     [switch]$Webcam,
+    [string]$Esp32,
     [int]$Vehicles = 3,
     [switch]$Fast,
     [string]$Engine = "auto"
@@ -26,7 +27,9 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root\server'
 Start-Sleep -Seconds 4
 
 $transport = if ($useMqtt) { "mqtt" } else { "http" }
-if ($Webcam) {
+if ($Esp32) {
+    $cmd = "cd '$root\detector'; $py detector_eyes.py --show --engine $Engine --transport $transport --esp32 $Esp32"
+} elseif ($Webcam) {
     $cmd = "cd '$root\detector'; $py detector_eyes.py --show --engine $Engine --transport $transport"
 } else {
     $flags = "--vehicles $Vehicles"

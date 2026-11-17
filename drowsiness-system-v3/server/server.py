@@ -685,6 +685,22 @@ async def _store_phone_capture(vid: str, jpeg: bytes, payload: dict) -> None:
                      "vehicle_id": vid, "image_url": d["image_url"]})
 
 
+@app.get("/api/esp32/proxy")
+async def api_esp32_proxy(url: str):
+    """Proxy pour récupérer une image depuis l'ESP32-CAM sans blocage CORS du navigateur."""
+    target = url.strip()
+    if not target.startswith("http://") and not target.startswith("https://"):
+        target = f"http://{target}"
+    try:
+        req = urllib.request.Request(target, headers={"User-Agent": "DriverSafety/3.0"})
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            data = resp.read()
+            return Response(content=data, media_type="image/jpeg",
+                            headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "no-cache"})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": f"ESP32-CAM injoignable ({e})"}, status_code=502)
+
+
 @app.post("/api/client/frame")
 async def api_client_frame(request: Request):
     """Reçoit une image JPEG de la caméra du téléphone du conducteur connecté et renvoie le résultat."""

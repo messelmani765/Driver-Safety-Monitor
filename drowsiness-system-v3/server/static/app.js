@@ -20,14 +20,9 @@ function toast(msg, type = 'default', ms = 3000) {
   toast._t = setTimeout(() => { el.style.display = 'none'; }, ms);
 }
 
-// ─── Mode "app conducteur" (application mobile): seulement l'espace client ───
-const APP_CLIENT = (() => {
-  try {
-    if (new URLSearchParams(location.search).get('app') === 'client') sessionStorage.setItem('app_client', '1');
-    return sessionStorage.getItem('app_client') === '1';
-  } catch { return false; }
-})();
-if (APP_CLIENT) document.documentElement.classList.add('app-client');
+// Interface complète unifiée (mobile & bureau): tous les espaces sont disponibles
+const APP_CLIENT = false;
+try { sessionStorage.removeItem('app_client'); } catch {}
 
 // ─── Pont avec l'application mobile (caméra du téléphone gérée par l'app) ───
 const HAS_APP = () => !!(window.AppBridge && window.AppBridge.postMessage);
@@ -108,7 +103,7 @@ const I18N = {
     dashboard: 'Tableau de bord', map: 'Carte en direct', vehicles: 'Flotte de véhicules',
     drivers: 'Clients', clients: 'Clients', history: 'Historique Détections',
     alerts: 'Alertes & Appels', settings: 'Réglages',
-    client_dashboard: 'Tableau de bord', client_camera: 'Caméra', client_plan: 'Mon offre', client_profile: 'Mon profil', client_trip: 'Mon trajet', client_alerts: 'Mes alarmes',
+    client_dashboard: 'Tableau de bord', client_camera: 'Caméra ESP32-CAM', client_plan: 'Mon offre', client_profile: 'Mon profil', client_trip: 'Mon trajet', client_alerts: 'Mes alarmes',
     client_detections: 'Mes détections',
     logout: 'Déconnexion', totalAlerts: 'Total des alertes', today: "aujourd'hui",
     cars: 'Véhicules', offline: 'hors ligne', online: 'en ligne', driversCount: 'Clients',
@@ -156,11 +151,6 @@ const isOnline = (code) => !!S.online[code];
 let PAGE = '';
 
 function getPagesForRole() {
-  if (AUTH.user?.role === 'client' && !APP_CLIENT) {
-    return [
-      { id: 'client_plan', icon: 'fa-crown', group: 'Mon Compte' },
-    ];
-  }
   if (AUTH.user?.role === 'client') {
     return [
       { id: 'client_dashboard', icon: 'fa-gauge-high', group: 'Surveillance' },
@@ -168,8 +158,8 @@ function getPagesForRole() {
       { id: 'client_trip', icon: 'fa-map-location-dot', group: 'Surveillance' },
       { id: 'client_alerts', icon: 'fa-bell', group: 'Surveillance' },
       { id: 'client_detections', icon: 'fa-eye', group: 'Surveillance' },
-      { id: 'client_plan', icon: 'fa-crown', group: 'Mon Compte' },
       { id: 'client_profile', icon: 'fa-id-card', group: 'Mon Compte' },
+      { id: 'client_plan', icon: 'fa-crown', group: 'Mon Compte' },
     ];
   }
   return [
@@ -198,7 +188,7 @@ function renderNav() {
 function route() {
   if (!AUTH.user) { showAuthScreen(); return; }
   const pages = getPagesForRole();
-  const defaultPage = AUTH.user.role === 'client' ? (APP_CLIENT ? 'client_dashboard' : 'client_plan') : 'dashboard';
+  const defaultPage = AUTH.user.role === 'client' ? 'client_dashboard' : 'dashboard';
   const id = (location.hash || `#${defaultPage}`).slice(1).split('?')[0];
   PAGE = pages.some(p => p.id === id) ? id : defaultPage;
   document.body.classList.remove('menu-open');
@@ -283,7 +273,6 @@ function setupAuthTabs() {
     panSuper.classList.add('active'); panClient.classList.remove('active');
   });
 
-  if (APP_CLIENT) tabClient.click();
   setupPasswordToggle('clientPass', 'toggleClientPass');
   setupPasswordToggle('superPass', 'toggleSuperPass');
 
@@ -339,17 +328,11 @@ function setupAuthTabs() {
 }
 
 async function onAuthSuccess() {
-  if (APP_CLIENT && AUTH.user?.role !== 'client') {
-    AUTH.clear(); showAuthScreen();
-    toast("Cette application est réservée aux conducteurs. Utilise le site web pour l'espace police.", 'error', 5000);
-    return;
-  }
   hideAuthScreen();
   await loadInitialData();
   connectWS();
-  location.hash = AUTH.user.role === 'client' ? (APP_CLIENT ? '#client_dashboard' : '#client_plan') : '#dashboard';
+  location.hash = AUTH.user.role === 'client' ? '#client_dashboard' : '#dashboard';
   route();
-  if (APP_CLIENT && AUTH.user.role === 'client') nativeCam('start');
 }
 
 // ─── OFFRES & PAIEMENT SIMULÉ ──────────────────────────────────────────
@@ -714,94 +697,186 @@ function stopCamera() {
   CAM.wake = null;
 }
 
-function pageClientCameraNative(view) {
-  view.innerHTML = `
-    <div class="card"><div class="card-head"><div class="ico-sm"><i class="fa-solid fa-video"></i></div>Caméra du téléphone
-      <div class="right"><span class="tag-pill gray" id="camBadge">Arrêtée</span></div></div>
-      <div class="cam-wrap">
-        <div class="cam-stats">
-          <div><small>État</small><b id="camState">—</b></div>
-          <div><small>Yeux fermés</small><b id="camSecs">0.0 s</b></div>
-          <div><small>Analyse</small><b id="camInfo">—</b></div>
-        </div>
-        <div class="cam-btns">
-          <button class="btn" id="camStart"><i class="fa-solid fa-play"></i> Démarrer la surveillance</button>
-          <button class="btn gray" id="camStop" style="display:none"><i class="fa-solid fa-stop"></i> Arrêter</button>
-        </div>
-        <p class="dsh-muted" style="text-align:center;margin-top:12px">La caméra avant du téléphone surveille tes yeux (petit aperçu en bas à gauche). Garde l'application ouverte et l'écran allumé. L'alerte, la sirène et l'appel de la police se déclenchent ici.</p>
-      </div></div>`;
-  $('#camStart').addEventListener('click', () => nativeCam('start'));
-  $('#camStop').addEventListener('click', () => nativeCam('stop'));
-  nativeCam('status');
-}
-
 function pageClientCamera(view) {
-  if (HAS_APP()) return pageClientCameraNative(view);
-  if (APP_CLIENT) {
-    view.innerHTML = `<div class="card"><div class="empty"><i class="fa-solid fa-mobile-screen"></i>
-      <p><b>Mets à jour l'application.</b><br>Cette version de l'app n'a pas encore la caméra intégrée. Sur le PC : <b>cd C:\\dev\\drowsiness_app</b> puis <b>flutter run</b> (téléphone branché en USB).</p></div></div>`;
-    return;
-  }
-  const ok = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  const savedUrl = sget('esp32_cam_url', 'http://192.168.0.50:81/stream');
   view.innerHTML = `
-    <div class="card"><div class="card-head"><div class="ico-sm"><i class="fa-solid fa-video"></i></div>Caméra du téléphone
-      <div class="right"><span class="tag-pill gray" id="camBadge">Arrêtée</span></div></div>
+    <div class="card"><div class="card-head"><div class="ico-sm"><i class="fa-solid fa-microchip"></i></div>Caméra Embarquée (ESP32-CAM)
+      <div class="right"><span class="tag-pill gray" id="camBadge">Prête</span></div></div>
       <div class="cam-wrap">
-        ${ok ? '' : `<div class="auth-notice" style="margin:0 0 14px"><i class="fa-solid fa-triangle-exclamation"></i><span><b>La caméra est bloquée par le navigateur</b> car l'adresse n'est pas en HTTPS. Sur Chrome (Android) : ouvre <b>chrome://flags/#unsafely-treat-insecure-origin-as-secure</b>, active-le, ajoute <b>${esc(location.origin)}</b>, puis relance Chrome. Cette page ne marche pas dans l'app tant que le site n'est pas en HTTPS.</span></div>`}
-        <div class="cam-box"><video id="camVideo" playsinline muted autoplay></video><canvas id="camOv"></canvas></div>
+        <div class="esp32-cfg">
+          <div class="field-wrap" style="flex:1;min-width:240px">
+            <input id="esp32Url" type="text" placeholder="IP ou URL de l'ESP32 (ex: 192.168.0.50 ou http://192.168.0.50:81/stream)" value="${esc(savedUrl)}">
+          </div>
+          <button class="btn gray" id="btnTestEsp32"><i class="fa-solid fa-plug"></i> Tester le flux</button>
+          <button class="btn" id="camStart"><i class="fa-solid fa-play"></i> Démarrer surveillance</button>
+          <button class="btn gray" id="camStop" style="display:none"><i class="fa-solid fa-stop"></i> Arrêter</button>
+        </div>
+
+        <div class="esp32-stream-box" style="position:relative;width:100%;aspect-ratio:4/3;background:#050b14;border-radius:16px;overflow:hidden;border:1px solid var(--border);display:flex;align-items:center;justify-content:center">
+          <img id="esp32Img" alt="Flux ESP32-CAM" style="display:none;width:100%;height:100%;object-fit:cover;">
+          <video id="camVideo" playsinline muted autoplay style="display:none;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)"></video>
+          <div id="esp32Placeholder" style="text-align:center;padding:24px;color:var(--muted)">
+            <i class="fa-solid fa-microchip" style="font-size:42px;color:var(--brand);margin-bottom:12px;display:block;opacity:0.85"></i>
+            <b style="font-size:15px;color:var(--text);display:block;margin-bottom:6px">Flux ESP32-CAM en attente</b>
+            <p style="font-size:12px;max-width:440px;margin:0 auto;line-height:1.5">Indiquez l'adresse IP de votre ESP32-CAM ci-dessus. Le flux sera affiché et surveillé en direct par l'intelligence artificielle.</p>
+          </div>
+          <canvas id="camOv" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
+        </div>
+
         <div class="cam-stats">
           <div><small>État</small><b id="camState">—</b></div>
           <div><small>Yeux fermés</small><b id="camSecs">0.0 s</b></div>
           <div><small>Analyse</small><b id="camInfo">—</b></div>
         </div>
-        <div class="cam-btns">
-          <button class="btn" id="camStart" ${ok ? '' : 'disabled'}><i class="fa-solid fa-play"></i> Démarrer la surveillance</button>
-          <button class="btn gray" id="camStop" style="display:none"><i class="fa-solid fa-stop"></i> Arrêter</button>
+
+        <div class="auth-notice" style="margin-top:16px;text-align:left">
+          <i class="fa-solid fa-terminal"></i>
+          <span><b>Mode Détecteur Haute Performance sur PC :</b><br>
+          Pour analyser le flux ESP32-CAM avec MediaPipe FaceMesh / YOLO à 30+ FPS sur votre ordinateur :<br>
+          <code>python detector_eyes.py --esp32 <span id="esp32IpLabel">${esc(savedUrl.replace(/https?:\/\/|\/stream|:81/g, '')) || '192.168.0.50'}</span> --show</code><br>
+          ou lancez : <code>.\\start_all.ps1 -Esp32 <span id="esp32IpLabel2">${esc(savedUrl.replace(/https?:\/\/|\/stream|:81/g, '')) || '192.168.0.50'}</span></code>
+          </span>
         </div>
-        <p class="dsh-muted" style="text-align:center;margin-top:12px">Place le téléphone face au visage, avec une bonne lumière. Garde cette page ouverte : l'alerte, la sirène et l'appel de la police fonctionnent comme avec la caméra du PC.</p>
-      </div></div>`;
+
+        <div style="margin-top:14px;text-align:center">
+          <button class="btn sm gray" id="btnToggleWebcam"><i class="fa-solid fa-camera"></i> Basculer sur la Webcam locale (secours)</button>
+        </div>
+      </div>
+    </div>`;
+
   const set = (id, v) => { const e = $('#' + id); if (e) e.textContent = v; };
   const badge = (txt, cls) => { const b = $('#camBadge'); if (b) { b.textContent = txt; b.className = 'tag-pill ' + cls; } };
+
+  const getCleanUrl = () => {
+    let raw = ($('#esp32Url').value || '').trim();
+    if (!raw) raw = '192.168.0.50';
+    if (!raw.startsWith('http://') && !raw.startsWith('https://')) {
+      if (raw.includes(':')) raw = `http://${raw}`;
+      else raw = `http://${raw}:81/stream`;
+    }
+    sset('esp32_cam_url', raw);
+    const ipOnly = raw.replace(/^https?:\/\//, '').split(':')[0].split('/')[0];
+    const l1 = $('#esp32IpLabel'), l2 = $('#esp32IpLabel2');
+    if (l1) l1.textContent = ipOnly;
+    if (l2) l2.textContent = ipOnly;
+    return raw;
+  };
+
+  $('#esp32Url').addEventListener('input', getCleanUrl);
+
+  $('#btnTestEsp32').addEventListener('click', () => {
+    const url = getCleanUrl();
+    const img = $('#esp32Img'), ph = $('#esp32Placeholder'), vid = $('#camVideo');
+    vid.style.display = 'none';
+    ph.style.display = 'none';
+    img.style.display = 'block';
+    badge('Test du flux…', 'amber');
+    img.src = '';
+    setTimeout(() => {
+      img.src = url;
+      img.onload = () => { badge('ESP32 en ligne', 'green'); toast('Flux ESP32-CAM connecté avec succès !', 'success'); };
+      img.onerror = () => {
+        const ipOnly = url.replace(/^https?:\/\//, '').split(':')[0].split('/')[0];
+        const fallbackUrl = `/api/esp32/proxy?url=${encodeURIComponent(`http://${ipOnly}/cam-hi.jpg`)}`;
+        img.src = fallbackUrl;
+        img.onload = () => { badge('ESP32 en ligne', 'green'); toast('Flux ESP32-CAM connecté !', 'success'); };
+        img.onerror = () => {
+          badge('Hors ligne', 'red');
+          toast('Impossible de joindre l\'ESP32-CAM à l\'adresse ' + url + '. Vérifiez que l\'ESP32 est allumé et sur le même Wi-Fi.', 'error', 5000);
+        };
+      };
+    }, 100);
+  });
+
   $('#camStart').addEventListener('click', async () => {
-    const video = $('#camVideo'), ov = $('#camOv'), work = document.createElement('canvas');
-    try {
-      CAM.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
-    } catch (e) { toast('Caméra refusée ou indisponible : ' + e.message, 'error', 5000); return; }
-    video.srcObject = CAM.stream; await video.play().catch(() => {});
+    const url = getCleanUrl();
+    const img = $('#esp32Img'), ph = $('#esp32Placeholder'), ov = $('#camOv');
+    ph.style.display = 'none';
+    img.style.display = 'block';
+    img.src = url;
     try { CAM.wake = await navigator.wakeLock.request('screen'); } catch {}
-    CAM.running = true; badge('En surveillance', 'green');
-    $('#camStart').style.display = 'none'; $('#camStop').style.display = '';
+    CAM.running = true;
+    badge('En surveillance', 'green');
+    $('#camStart').style.display = 'none';
+    $('#camStop').style.display = '';
+
+    const workCanvas = document.createElement('canvas');
+    const ipOnly = url.replace(/^https?:\/\//, '').split(':')[0].split('/')[0];
+
     const loop = async () => {
       if (!CAM.running) return;
       const t0 = Date.now();
       try {
-        const w = 480, h = Math.round(w * (video.videoHeight || 480) / (video.videoWidth || 640));
-        work.width = w; work.height = h; work.getContext('2d').drawImage(video, 0, 0, w, h);
-        const blob = await new Promise(r => work.toBlob(r, 'image/jpeg', 0.6));
-        const r = await fetch('/api/client/frame', { method: 'POST', headers: { Authorization: `Bearer ${AUTH.token}`, 'Content-Type': 'image/jpeg' }, body: blob });
-        const d = await r.json().catch(() => ({}));
-        if (r.status === 401) { stopCamera(); AUTH.clear(); showAuthScreen(); return; }
-        if (!r.ok) throw new Error(d.error || r.statusText);
-        badge('En surveillance', 'green');
-        set('camState', CAM_STATES[d.state] || d.state); set('camSecs', `${(d.eyes_closed_s || 0).toFixed(1)} s`);
-        set('camInfo', `${Math.round(d.infer_ms)} ms · ${Date.now() - t0} ms`);
-        const stEl = $('#camState'); if (stEl) stEl.dataset.s = d.state;
-        // boîtes sur les yeux (le conteneur est inversé comme un miroir: les coordonnées restent justes)
-        const cw = video.clientWidth, ch = video.clientHeight; ov.width = cw; ov.height = ch;
-        const g = ov.getContext('2d'); g.clearRect(0, 0, cw, ch); g.lineWidth = 2; g.font = '12px sans-serif';
-        (d.boxes || []).forEach(([lab, conf, x1, y1, x2, y2]) => {
-          g.strokeStyle = lab === 'closed' ? '#ef4444' : '#10b981';
-          g.strokeRect(x1 * cw / d.w, y1 * ch / d.h, (x2 - x1) * cw / d.w, (y2 - y1) * ch / d.h);
-        });
-      } catch (e) { badge('Erreur', 'red'); set('camInfo', e.message); }
-      if (CAM.running) CAM.timer = setTimeout(loop, Math.max(60, 350 - (Date.now() - t0)));
+        let blob = null;
+        if (img.naturalWidth > 0) {
+          workCanvas.width = 480;
+          workCanvas.height = Math.round(480 * (img.naturalHeight || 360) / (img.naturalWidth || 480));
+          const ctx = workCanvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, workCanvas.width, workCanvas.height);
+          blob = await new Promise(r => workCanvas.toBlob(r, 'image/jpeg', 0.65)).catch(() => null);
+        }
+        if (!blob) {
+          const snapshotResp = await fetch(`/api/esp32/proxy?url=${encodeURIComponent(`http://${ipOnly}/cam-hi.jpg`)}`).catch(() => null);
+          if (snapshotResp && snapshotResp.ok) {
+            blob = await snapshotResp.blob();
+          }
+        }
+        if (blob) {
+          const r = await fetch('/api/client/frame', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${AUTH.token}`, 'Content-Type': 'image/jpeg' },
+            body: blob
+          });
+          const d = await r.json().catch(() => ({}));
+          if (r.status === 401) { stopCamera(); AUTH.clear(); showAuthScreen(); return; }
+          if (r.ok && d) {
+            badge('En surveillance', 'green');
+            set('camState', CAM_STATES[d.state] || d.state);
+            set('camSecs', `${(d.eyes_closed_s || 0).toFixed(1)} s`);
+            set('camInfo', `${Math.round(d.infer_ms || 0)} ms · ${Date.now() - t0} ms`);
+            const stEl = $('#camState'); if (stEl) stEl.dataset.s = d.state;
+            const cw = img.clientWidth || 480, ch = img.clientHeight || 360;
+            ov.width = cw; ov.height = ch;
+            const g = ov.getContext('2d');
+            g.clearRect(0, 0, cw, ch);
+            g.lineWidth = 2;
+            (d.boxes || []).forEach(([lab, conf, x1, y1, x2, y2]) => {
+              g.strokeStyle = lab === 'closed' ? '#ef4444' : '#10b981';
+              g.strokeRect(x1 * cw / (d.w || cw), y1 * ch / (d.h || ch), (x2 - x1) * cw / (d.w || cw), (y2 - y1) * ch / (d.h || ch));
+            });
+          }
+        }
+      } catch (err) {
+        set('camInfo', err.message || 'analyse');
+      }
+      if (CAM.running) CAM.timer = setTimeout(loop, Math.max(80, 320 - (Date.now() - t0)));
     };
     loop();
   });
+
   $('#camStop').addEventListener('click', () => {
-    stopCamera(); badge('Arrêtée', 'gray');
-    $('#camStart').style.display = ''; $('#camStop').style.display = 'none';
+    stopCamera();
+    badge('Arrêtée', 'gray');
+    $('#camStart').style.display = '';
+    $('#camStop').style.display = 'none';
     const ov = $('#camOv'); if (ov) ov.getContext('2d').clearRect(0, 0, ov.width, ov.height);
+  });
+
+  $('#btnToggleWebcam').addEventListener('click', async () => {
+    stopCamera();
+    const vid = $('#camVideo'), img = $('#esp32Img'), ph = $('#esp32Placeholder');
+    img.style.display = 'none';
+    ph.style.display = 'none';
+    vid.style.display = 'block';
+    try {
+      CAM.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+      vid.srcObject = CAM.stream;
+      await vid.play().catch(() => {});
+      badge('Webcam locale active', 'green');
+      toast('Webcam locale activée.', 'success');
+    } catch (err) {
+      toast('Webcam locale indisponible : ' + err.message, 'error');
+    }
   });
 }
 
@@ -1603,7 +1678,7 @@ function handleWsMessage(m) {
       S.unread += 1;
       $('#bellDot').style.display = 'block';
       if (m.level >= 4) {
-        if (isClient && APP_CLIENT && (m.vehicle_id === myCode || m.vehicle_code === myCode)) showClientAlert(m);
+        if (isClient && (m.vehicle_id === myCode || m.vehicle_code === myCode)) showClientAlert(m);
         else if (!isClient) showPoliceDispatch(m);
       } else { toast(`${m.plate || m.vehicle_id}: ${m.title}`); }
       if (PAGE === 'client_alerts' && $('#view')) pageClientAlerts($('#view'));
@@ -1706,13 +1781,11 @@ async function init() {
 
   // Session existante
   let hasUser = await AUTH.init();
-  if (hasUser && APP_CLIENT && AUTH.user?.role !== 'client') { AUTH.clear(); hasUser = false; }
   if (hasUser) {
     hideAuthScreen();
     await loadInitialData();
     connectWS();
     route();
-    if (APP_CLIENT && AUTH.user?.role === 'client') nativeCam('start');
   } else {
     showAuthScreen();
   }

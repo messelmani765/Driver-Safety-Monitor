@@ -149,7 +149,8 @@ def send_capture(server: str, jpeg: bytes, vehicle: str, lat: float, lon: float,
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--source", default="0", help="0 = webcam, ou chemin d'une vidéo")
+    p.add_argument("--source", default="0", help="0 = webcam, ou chemin d'une vidéo, ou URL")
+    p.add_argument("--esp32", default="", help="Adresse IP ou URL de l'ESP32-CAM (ex: 192.168.0.50 ou http://192.168.0.50:81/stream)")
     p.add_argument("--engine", default="auto", choices=["auto", "yolo", "mediapipe"])
     p.add_argument("--model", default=str(ROOT / "models" / "eyes_best.pt"))
     p.add_argument("--conf", type=float, default=0.4)
@@ -169,8 +170,20 @@ def parse_args():
 
 def main():
     args = parse_args()
-    source = int(args.source) if args.source.isdigit() else args.source
-    is_file = not isinstance(source, int)
+    if args.esp32:
+        val = args.esp32.strip()
+        if not val.startswith("http://") and not val.startswith("https://") and not val.startswith("rtsp://"):
+            if ":" not in val:
+                source = f"http://{val}:81/stream"
+            else:
+                source = f"http://{val}"
+        else:
+            source = val
+        print(f"Connexion au flux ESP32-CAM: {source}")
+    else:
+        source = int(args.source) if args.source.isdigit() else args.source
+    is_stream = isinstance(source, str) and any(source.startswith(p) for p in ("http://", "https://", "rtsp://"))
+    is_file = not isinstance(source, int) and not is_stream
 
     # Moteur
     engine_name = args.engine
@@ -249,6 +262,12 @@ def main():
             if not ok:
                 if is_file:
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    continue
+                if is_stream:
+                    print("Flux ESP32-CAM temporairement indisponible, tentative de reconnexion dans 1s...")
+                    time.sleep(1.0)
+                    cap.release()
+                    cap = cv2.VideoCapture(source)
                     continue
                 print("La caméra ne donne plus d'image. Vérifie la connexion USB ou que la webcam n'est pas sollicitée ailleurs.")
                 break
