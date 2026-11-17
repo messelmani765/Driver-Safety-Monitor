@@ -23,18 +23,20 @@ from typing import Optional
 
 BASE = Path(__file__).resolve().parent
 DETECTOR_DIR = BASE.parent / "detector"
-if str(BASE) not in sys.path:
-    sys.path.insert(0, str(BASE))
-if str(DETECTOR_DIR) not in sys.path:
-    sys.path.insert(0, str(DETECTOR_DIR))
 
-# Pré-chargement des modules de détection sans avertissement d'importation
+# Ajout de server/ et detector/ dans sys.path dès le départ
+for _p in (str(BASE), str(DETECTOR_DIR)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+# Pré-chargement des modules de détection (rester None si opencv/mediapipe absent)
+_de_mod = None
+_du_mod = None
 try:
-    import detector_eyes as de  # type: ignore
-    import utils as du          # type: ignore
+    import detector_eyes as _de_mod  # type: ignore
+    import utils as _du_mod          # type: ignore
 except Exception:
-    de = None
-    du = None
+    pass  # Sera chargé à la première requête /api/client/frame
 
 import paho.mqtt.client as mqtt
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
@@ -596,33 +598,33 @@ async def api_client_profile_update(request: Request):
 # detector_eyes.py (YOLO si models/eyes_best.pt existe, sinon MediaPipe + EAR).
 import threading
 
-DETECTOR_DIR = BASE.parent / "detector"
+# DETECTOR_DIR déjà défini en tête de fichier (ne pas redéfinir)
 _phone = {"engine": None, "lock": threading.Lock(), "cars": {}}
 
 
 def _phone_modules():
-    global de, du
-    if de is None or du is None:
-        if str(DETECTOR_DIR) not in sys.path:
-            sys.path.insert(0, str(DETECTOR_DIR))
+    """Retourne (detector_eyes, utils) en les chargeant si nécessaire."""
+    global _de_mod, _du_mod
+    if _de_mod is None or _du_mod is None:
         try:
-            import detector_eyes as _de
-            import utils as _du
-            de, du = _de, _du
-        except Exception as e:
+            import detector_eyes as _de  # type: ignore
+            import utils as _du          # type: ignore
+            _de_mod, _du_mod = _de, _du
+        except Exception as exc:
             raise RuntimeError(
-                f"Modules de détection indisponibles: {e}. "
-                "Vérifiez que 'detector/' contient detector_eyes.py et utils.py."
+                f"Modules de détection introuvables ({exc}). "
+                "Vérifiez que detector/detector_eyes.py et detector/utils.py existent "
+                "et que 'pip install opencv-python mediapipe==0.10.14' a été fait."
             )
-    return de, du
+    return _de_mod, _du_mod
 
 
 def _phone_engine():
     if _phone["engine"] is None:
         try:
-            de, _ = _phone_modules()
+            de_mod, _ = _phone_modules()
             model = BASE.parent / "models" / "eyes_best.pt"
-            _phone["engine"] = de.YoloEyes(str(model), 0.4, 640) if model.exists() else de.MediaPipeEyes(0.21)
+            _phone["engine"] = de_mod.YoloEyes(str(model), 0.4, 640) if model.exists() else de_mod.MediaPipeEyes(0.21)
         except (SystemExit, ImportError) as e:
             raise RuntimeError("Moteur de détection indisponible sur le serveur. Installe: "
                                "pip install opencv-python mediapipe==0.10.14 (" + str(e) + ")")
@@ -632,7 +634,7 @@ def _phone_engine():
 def _process_phone_frame(vid: str, jpeg: bytes, limit_s: float, cooldown_s: float, route_pts) -> tuple:
     import cv2
     import numpy as np
-    de, du = _phone_modules()
+    de_mod, du_mod = _phone_modules()
     frame = cv2.imdecode(np.frombuffer(jpeg, np.uint8), cv2.IMREAD_COLOR)
     if frame is None:
         raise ValueError("image illisible")
@@ -648,10 +650,10 @@ def _process_phone_frame(vid: str, jpeg: bytes, limit_s: float, cooldown_s: floa
     n_open = sum(1 for d in dets if d[0] == "open")
     n_closed = sum(1 for d in dets if d[0] == "closed")
     if car["timer"] is None or abs(car["timer"].closed_seconds - limit_s) > 1e-6:
-        car["timer"] = du.EyeTimer(closed_seconds=limit_s)
+        car["timer"] = du_mod.EyeTimer(closed_seconds=limit_s)
     if car["route"] is None:
         pts = [[float(p[0]), float(p[1])] for p in (route_pts or [])]
-        car["route"] = du.RouteSimulator(points=pts if len(pts) >= 2 else None, speed_kmh=du.DEFAULT_SPEED_KMH)
+        car["route"] = du_mod.RouteSimulator(points=pts if len(pts) >= 2 else None, speed_kmh=du_mod.DEFAULT_SPEED_KMH)
     state, closed_s = car["timer"].update(n_open, n_closed, now)
     dt = max(now - car["last"], 1e-3)
     car["last"] = now
@@ -663,7 +665,7 @@ def _process_phone_frame(vid: str, jpeg: bytes, limit_s: float, cooldown_s: floa
         "eyes_open": n_open, "eyes_closed": n_closed,
         "confidence": round(sum(confs) / len(confs), 3) if confs else 0.0,
         "lat": round(lat, 6), "lon": round(lon, 6), "heading": round(heading, 1),
-        "route_progress": round(progress, 1), "speed": du.DEFAULT_SPEED_KMH, "impact": False,
+        "route_progress": round(progress, 1), "speed": du_mod.DEFAULT_SPEED_KMH, "impact": False,
         "ts": int(now * 1000), "infer_ms": round(infer_ms, 1), "fps": round(car["fps"], 1),
         "source": "phone",
     }
@@ -685,7 +687,7 @@ def _process_phone_frame(vid: str, jpeg: bytes, limit_s: float, cooldown_s: floa
     if state == "Asleep" and (not car["captured"] or now - car["last_capture"] >= cooldown_s):
         car["captured"], car["last_capture"] = True, now
         src_frame, src_dets = (car["best"][1], car["best"][2]) if car["best"] else (frame, dets)
-        de.draw_overlay(src_frame, src_dets, state, closed_s, limit_s, car["fps"], lat, lon, False)
+        de_mod.draw_overlay(src_frame, src_dets, state, closed_s, limit_s, car["fps"], lat, lon, False)
         ok, buf = cv2.imencode(".jpg", src_frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
         if ok:
             capture = buf.tobytes()
