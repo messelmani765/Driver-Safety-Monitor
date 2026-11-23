@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+ENV/
+
+# Database & local runtime logs
+server/logs/*.csv
+server/data/*.db-journal
+*.db-journal
+drowsiness-system-v3/server/logs/*.csv
+drowsiness-system-v3/server/data/*.db-journal
+
+# Flutter / Dart (do NOT ignore lib/ !)
+flutter_app/.dart_tool/
+flutter_app/build/
+flutter_app/.flutter-plugins
+flutter_app/.flutter-plugins-dependencies
+flutter_app/.packages
+drowsiness-system-v3/flutter_app/.dart_tool/
+drowsiness-system-v3/flutter_app/build/
+drowsiness-system-v3/flutter_app/.flutter-plugins
+drowsiness-system-v3/flutter_app/.flutter-plugins-dependencies
+drowsiness-system-v3/flutter_app/.packages
+.dart_tool/
+.packages
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+.idea/
+
+# Archives
+*.zip

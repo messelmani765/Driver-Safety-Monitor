@@ -1,0 +1,8 @@
+ultralytics
+opencv-python
+paho-mqtt>=2.0
+fastapi
+uvicorn[standard]
+openpyxl
+mediapipe==0.10.14
+numpy<2
