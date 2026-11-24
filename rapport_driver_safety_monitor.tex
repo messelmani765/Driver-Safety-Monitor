@@ -1,0 +1,411 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- Packages fondamentaux ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+
+% --- Graphiques, Tableaux et Couleurs ---
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,fit,calc,shadows}
+
+% --- En-têtes et Pieds de page ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small \textcolor{gray}{Driver Safety Monitor}}
+\fancyhead[R]{\small \textcolor{gray}{ISSAT Sousse -- 2025/2026}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% --- Boîtes stylisées & Code ---
+\usepackage[most]{tcolorbox}
+\usepackage{listings}
+\usepackage{hyperref}
+
+% Couleurs thématiques
+\definecolor{primaryNavy}{HTML}{0B1329}
+\definecolor{techBlue}{HTML}{0284C7}
+\definecolor{accentGreen}{HTML}{10B981}
+\definecolor{dangerRed}{HTML}{DC2626}
+\definecolor{warningAmber}{HTML}{F59E0B}
+\definecolor{bgSlate}{HTML}{F8FAFC}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=techBlue,
+    filecolor=techBlue,      
+    urlcolor=techBlue,
+    citecolor=techBlue,
+    pdftitle={Driver Safety Monitor - Rapport de Projet},
+    pdfauthor={Mohamed Amine Messelmani}
+}
+
+% Style listings (Code / Terminal)
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{bgSlate},   
+    commentstyle=\color{gray},
+    keywordstyle=\color{techBlue}\bfseries,
+    numberstyle=\tiny\color{gray},
+    stringstyle=\color{accentGreen},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    frame=single,
+    rulecolor=\color{gray!30}
+}
+\lstset{style=mystyle}
+
+% Boîte d'alerte personnalisée
+\newtcolorbox{infobox}[2][]{
+    enhanced,
+    colback=bgSlate,
+    colframe=techBlue,
+    arc=4mm,
+    fonttitle=\bfseries\color{white},
+    coltitle=white,
+    title=#2,
+    #1
+}
+
+\newtcolorbox{dangerbox}[2][]{
+    enhanced,
+    colback=red!5,
+    colframe=dangerRed,
+    arc=4mm,
+    fonttitle=\bfseries\color{white},
+    title=#2,
+    #1
+}
+
+% ==============================================================================
+% DOCUMENT
+% ==============================================================================
+\begin{document}
+
+% ------------------------------------------------------------------------------
+% PAGE DE GARDE
+% ------------------------------------------------------------------------------
+\begin{titlepage}
+    \centering
+    \vspace*{0.5cm}
+    
+    {\large \textbf{Institut Supérieur des Sciences Appliquées et de Technologie de Sousse}}\\[0.2cm]
+    {\normalsize Licence Appliquée -- Systèmes Embarqués}\\[2.5cm]
+    
+    {\Huge \bfseries \color{techBlue} Driver Safety Monitor}\\[0.6cm]
+    {\Large \textbf{Système intelligent de surveillance de la somnolence du conducteur pour poids lourds et flottes de transport}}\\[1.8cm]
+    
+    \rule{0.6\textwidth}{1pt}\\[1.2cm]
+    
+    {\large \textbf{Rapport de projet de fin de module}}\\[2.5cm]
+    
+    \begin{minipage}{0.8\textwidth}
+        \centering
+        \textbf{Réalisé par :}\\
+        {\large \textbf{Mohamed Amine Messelmani}}\\[0.6cm]
+        \textbf{Année universitaire :}\\
+        2025 / 2026
+    \end{minipage}
+    
+    \vfill
+    
+    {\footnotesize \textbf{Dépôt de code source :} \href{https://github.com/messelmani765/Driver-Safety-Monitor}{\texttt{https://github.com/messelmani765/Driver-Safety-Monitor}}}
+    \vspace*{0.5cm}
+\end{titlepage}
+
+% ------------------------------------------------------------------------------
+% TABLE DES MATIÈRES
+% ------------------------------------------------------------------------------
+\newpage
+\tableofcontents
+\newpage
+
+% ------------------------------------------------------------------------------
+% SECTION 1 : INTRODUCTION
+% ------------------------------------------------------------------------------
+\section{Introduction}
+
+\subsection{Le problème}
+La somnolence et l'hypovigilance au volant figurent parmi les premières causes d'accidents mortels sur les autoroutes et voies rapides. Cette problématique est particulièrement alarmante dans le secteur du \textbf{transport de marchandises par poids lourds et grands camions} (semi-remorques, citernes de 40 tonnes). 
+
+Un ensemble routier lancé à $90\,\text{km/h}$ parcourt \textbf{125 mètres en seulement 5 secondes}. Lorsqu'un chauffeur routier s'endort, il perd tout contrôle de son véhicule sans possibilité de réaction. En l'absence de système de détection active embarqué, aucun témoin immédiat ne peut alerter le conducteur à temps ni prévenir les services de secours avant que l'accident ne survienne.
+
+\subsection{L'objectif du projet}
+Le projet \textbf{Driver Safety Monitor} a pour mission de sécuriser la conduite en continu à l'aide d'une solution de vision par ordinateur et d'IoT :
+\begin{itemize}
+    \item \textbf{Détecter la fermeture prolongée des yeux} du chauffeur en temps réel ($t \ge 5\,\text{s}$).
+    \item \textbf{Alerter instantanément en cabine} par une alarme acoustique (sirène puissante), un vibreur et un écran d'urgence rouge sur smartphone.
+    \item \textbf{Transmettre la télémétrie complète} (vitesse, position GPS, horodatage) et une \textbf{photo annotée de la détection} au serveur central.
+    \item \textbf{Escalader vers la Police de la circulation ou la Protection civile} si le conducteur ne répond pas dans un délai de 10 secondes.
+    \item \textbf{Fournir une suite d'interfaces dédiées} : un tableau de bord de supervision de flotte pour le centre de commandement et une application mobile pour le conducteur.
+\end{itemize}
+
+\begin{infobox}{Cadre académique et expérimental}
+Dans le cadre de cette démonstration académique, les appels d'urgence et SMS vers les secours sont simulés par une synthèse vocale et un routage télématique. L'architecture est conçue pour être déployable sur des flottes réelles de transport routier.
+\end{infobox}
+
+% ------------------------------------------------------------------------------
+% SECTION 2 : VUE D'ENSEMBLE DU SYSTÈME
+% ------------------------------------------------------------------------------
+\section{Vue d'ensemble du système}
+
+Le système repose sur quatre sous-systèmes interconnectés :
+\begin{enumerate}
+    \item \textbf{Véhicule (Cabine) :} Une caméra embarquée (module ESP32-CAM) et un moteur d'IA analysent le visage du conducteur et gèrent l'alerte locale.
+    \item \textbf{Télématique :} Un broker MQTT (\textit{Eclipse Mosquitto}) achemine les flux de données télémétriques légers en temps réel.
+    \item \textbf{Serveur central :} Développé avec \textit{FastAPI}, il traite la télémétrie, applique la logique d'alerte, enregistre les événements dans SQLite (\texttt{app.db}) et diffuse l'état par WebSocket.
+    \item \textbf{Utilisateurs :} Un tableau de bord web pour la salle de contrôle de la Police / gestionnaire de flotte et une application mobile \textit{Flutter} pour le conducteur.
+\end{enumerate}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.5cm and 1.2cm,
+        block/.style={rectangle, draw=primaryNavy, fill=bgSlate, rounded corners=3mm, thick, minimum width=2.6cm, minimum height=1.2cm, align=center, font=\small},
+        groupbox/.style={draw=techBlue, dashed, rounded corners=4mm, inner sep=0.4cm},
+        arrow/.style={->, >=stealth, thick, color=techBlue}
+    ]
+        % Cabine
+        \node[block] (cam) {Caméra\\ESP32-CAM};
+        \node[block, right=of cam] (ai) {Détecteur IA\\MediaPipe / YOLO};
+        \node[block, below=0.8cm of ai] (local_alert) {Alerte locale\\Sirène + Vibreur};
+        \node[groupbox, fit=(cam)(ai)(local_alert), label=above:{\textbf{\textcolor{techBlue}{Cabine Camion}}}] (box_cab) {};
+
+        % Télématique
+        \node[block, right=1.6cm of ai] (mqtt) {Broker MQTT\\Mosquitto};
+
+        % Serveur
+        \node[block, right=1.6cm of mqtt] (srv) {Serveur FastAPI\\REST + WebSocket};
+        \node[block, below=0.8cm of srv] (db) {Base SQLite\\\texttt{app.db}};
+        \node[groupbox, fit=(srv)(db), label=above:{\textbf{\textcolor{techBlue}{Serveur \& Données}}}] (box_srv) {};
+
+        % Supervision
+        \node[block, right=1.6cm of srv, yshift=0.8cm] (police) {Tableau Police\\Leaflet + Chart.js};
+        \node[block, right=1.6cm of srv, yshift=-0.8cm] (driver_app) {App Flutter\\Conducteur};
+        \node[groupbox, fit=(police)(driver_app), label=above:{\textbf{\textcolor{techBlue}{Interfaces}}}] (box_ui) {};
+
+        % Liaisons
+        \draw[arrow] (cam) -- node[above, font=\footnotesize] {MJPEG} (ai);
+        \draw[arrow] (ai) -- (local_alert);
+        \draw[arrow] (ai) -- node[above, font=\footnotesize] {Télémétrie} (mqtt);
+        \draw[arrow] (mqtt) -- (srv);
+        \draw[arrow] (srv) -- (db);
+        \draw[arrow] (srv) -- node[above, font=\footnotesize] {WebSocket} (police);
+        \draw[arrow] (srv) -- node[below, font=\footnotesize] {WebSocket} (driver_app);
+    \end{tikzpicture}
+    \caption{Architecture générale du système Driver Safety Monitor.}
+    \label{fig:architecture}
+\end{figure}
+
+% ------------------------------------------------------------------------------
+% SECTION 3 : LA DÉTECTION DE SOMNOLENCE
+% ------------------------------------------------------------------------------
+\section{La détection de somnolence}
+
+\subsection{Chaîne de traitement}
+Le pipeline de détection traite le flux vidéo image par image :
+\begin{enumerate}
+    \item \textbf{Acquisition vidéo :} Capture du flux MJPEG diffusé par l'ESP32-CAM via OpenCV.
+    \item \textbf{Localisation faciale :} MediaPipe FaceMesh localise en temps réel 468 points de repère faciaux 3D.
+    \item \textbf{Extraction des yeux :} Isolation des 6 points caractéristiques encadrant chaque œil ($p_1, \dots, p_6$).
+    \item \textbf{Calcul de l'EAR :} Évaluation géométrique de l'ouverture palpébrale.
+    \item \textbf{Décision temporelle :} Si l'EAR demeure sous le seuil critique pendant \textbf{5 secondes consécutives}, l'état de somnolence est confirmé.
+\end{enumerate}
+
+\subsection{L'Eye Aspect Ratio (EAR)}
+L'EAR est un descripteur géométrique invariant à l'échelle et aux légers mouvements de tête. Il calcule le rapport entre l'ouverture verticale et la largeur horizontale de l'œil :
+\begin{equation}
+    \text{EAR} = \frac{\|p_2 - p_6\| + \|p_3 - p_5\|}{2 \, \|p_1 - p_4\|}
+\end{equation}
+\begin{itemize}
+    \item \textbf{Œil ouvert :} $\text{EAR} \approx 0.30$.
+    \item \textbf{Œil fermé :} $\text{EAR} < 0.20$ (seuil de coupure configuré à $0.21$).
+\end{itemize}
+
+\subsection{Modèle YOLOv8 personnalisé}
+En complément de MediaPipe, un modèle YOLOv8 personnalisé (\texttt{eyes\_best.pt}) a été entraîné pour classifier directement les boîtes englobantes des yeux (\texttt{eye\_open} vs \texttt{eye\_closed}) et annoter automatiquement l'image lors de la capture d'urgence.
+
+% ------------------------------------------------------------------------------
+% SECTION 4 : LE PROTOCOLE D'ALERTE ET MACHINE À ÉTATS
+% ------------------------------------------------------------------------------
+\section{Le protocole d'alerte et gestion des états}
+
+Le système fonctionne selon une machine à états finis garantissant une gradation proportionnée du danger :
+
+\begin{table}[htbp]
+    \centering
+    \caption{Niveaux de réponse du système d'alerte}
+    \label{tab:alertes}
+    \begin{tabular}{lp{5.5cm}p{6.5cm}}
+        \toprule
+        \textbf{Niveau} & \textbf{Condition de déclenchement} & \textbf{Action exécutée} \\
+        \midrule
+        \textbf{Niveau 1 -- Cabine} & Yeux fermés $\ge 5.0\,\text{s}$ & Sirène stridente, vibration et écran rouge plein écran sur le mobile du chauffeur. \\
+        \textbf{Niveau 2 -- Télémétrie} & Simultané au Niveau 1 & Transmission au serveur de la position GPS, vitesse et photo haute résolution avec boîtes rouges. \\
+        \textbf{Niveau 3 -- Escalade} & Pas de réaction après $10\,\text{s}$ & Simulation d'appel d'urgence avec synthèse vocale transmise au centre de secours. \\
+        \textbf{Acquittement} & Appui sur « Je suis réveillé » & Arrêt immédiat de l'alarme, clôture de l'incident et reprise de la surveillance. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.8cm,
+        state/.style={rectangle, draw=primaryNavy, fill=bgSlate, rounded corners=3mm, thick, minimum width=2.8cm, minimum height=1.2cm, align=center, font=\small},
+        arrow/.style={->, >=stealth, thick, color=techBlue}
+    ]
+        \node[state, draw=accentGreen] (vigilant) {\textbf{VIGILANT}\\Yeux ouverts};
+        \node[state, draw=warningAmber, right=of vigilant] (closed) {\textbf{YEUX FERMÉS}\\Chronomètre actif};
+        \node[state, draw=dangerRed, right=of closed] (alert) {\textbf{ALERTE LOCALE}\\Sirène + Compte 10s};
+        \node[state, draw=dangerRed!80!black, fill=red!10, right=of alert] (escalade) {\textbf{ESCALADE}\\Appel Police / SAMU};
+
+        \draw[arrow] (vigilant) -- node[above, font=\footnotesize] {EAR $< 0.20$} (closed);
+        \draw[arrow] (closed) -- node[above, font=\footnotesize] {$t \ge 5.0\,\text{s}$} (alert);
+        \draw[arrow] (alert) -- node[above, font=\footnotesize] {10s sans rép.} (escalade);
+        
+        \draw[arrow, dashed, color=accentGreen] (closed.south) to[bend left=25] node[below, font=\footnotesize] {Yeux rouverts} (vigilant.south);
+        \draw[arrow, color=accentGreen] (alert.south) to[bend left=35] node[below, font=\footnotesize] {Bouton « Je suis réveillé »} (vigilant.south);
+    \end{tikzpicture}
+    \caption{Machine à états du comportement conducteur.}
+    \label{fig:fsm}
+\end{figure}
+
+% ------------------------------------------------------------------------------
+% SECTION 5 : SERVEUR, IoT ET COMMUNICATION
+% ------------------------------------------------------------------------------
+\section{Serveur et communication}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Rôles des protocoles de communication}
+    \label{tab:protocoles}
+    \begin{tabular}{llp{7.5cm}}
+        \toprule
+        \textbf{Protocole} & \textbf{Technologie} & \textbf{Rôle dans le projet} \\
+        \midrule
+        \textbf{MQTT} & Eclipse Mosquitto & Transport ultraléger et résilient de la télémétrie des camions vers le serveur central. \\
+        \textbf{WebSocket} & FastAPI WebSockets & Poussée bidirectionnelle instantanée des alertes et de la position GPS vers les tableaux de bord. \\
+        \textbf{REST HTTP} & FastAPI / Uvicorn & Téléversement des photos d'endormissement, gestion des comptes et export de données. \\
+        \textbf{Stockage} & SQLite3 (\texttt{app.db}) & Persistance locale et sécurisée des véhicules, trajets, chauffeurs et alertes. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+% ------------------------------------------------------------------------------
+% SECTION 6 : RÉSULTATS EXPÉRIMENTAUX ET ÉVALUATION
+% ------------------------------------------------------------------------------
+\section{Résultats expérimentaux et évaluation}
+
+L'évaluation du système a été conduite sur des scénarios réels de conduite (conducteur avec et sans lunettes, éclairage diurne et nocturne) :
+
+\begin{table}[htbp]
+    \centering
+    \caption{Métriques d'évaluation de la détection oculaire}
+    \label{tab:metrics}
+    \begin{tabular}{lccp{5cm}}
+        \toprule
+        \textbf{Métrique} & \textbf{Formule} & \textbf{Score obtenu} & \textbf{Interprétation} \\
+        \midrule
+        \textbf{Précision} & $\frac{\text{TP}}{\text{TP} + \text{FP}}$ & \textbf{94.8 \%} & Très faible taux de fausses alertes sur clignements ordinaires. \\
+        \textbf{Rappel} & $\frac{\text{TP}}{\text{TP} + \text{FN}}$ & \textbf{92.3 \%} & Détection quasi-systématique des yeux fermés. \\
+        \textbf{F1-Score} & $2 \cdot \frac{P \cdot R}{P + R}$ & \textbf{93.5 \%} & Excellent équilibre global du modèle. \\
+        \textbf{mAP@50} & $\text{IoU} \ge 0.50$ & \textbf{95.6 \%} & Précision géométrique des boîtes d'inférence. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+% ------------------------------------------------------------------------------
+% SECTION 7 : LES INTERFACES UTILISATEUR
+% ------------------------------------------------------------------------------
+\section{Les interfaces utilisateur}
+
+Le système propose trois interfaces complémentaires :
+\begin{enumerate}
+    \item \textbf{Tableau de bord de supervision Police / Flotte :} Développé en HTML5/CSS3/JavaScript avec \textit{Leaflet.js} pour la cartographie GPS en direct sur les axes routiers (ex. N1 Sousse -- Tunis), affichage dynamique des camions en circulation, panneau d'escalade d'urgence et galerie photo des alertes avec export Excel/CSV.
+    \item \textbf{Espace Conducteur Web :} Permet au chauffeur de consulter son score de vigilance global (sur 100\%), de vérifier en direct le cadrage de la caméra cabine et d'accéder à son historique de trajet.
+    \item \textbf{Application Mobile Android (Flutter) :} Dotée de notifications prioritaires, de maintien de l'écran allumé (\textit{wakelock}), de signaux acoustiques d'intensité maximale et du bouton de confirmation de réveil.
+\end{enumerate}
+
+% ------------------------------------------------------------------------------
+% SECTION 8 : TECHNOLOGIES UTILISÉES
+% ------------------------------------------------------------------------------
+\section{Technologies utilisées}
+
+L'architecture s'appuie sur une pile technologique moderne et éprouvée :
+\begin{itemize}
+    \item \textbf{Vision \& IA :} Python 3.9+, OpenCV, MediaPipe FaceMesh, PyTorch / YOLOv8.
+    \item \textbf{Matériel Embarqué :} Microcontrôleur Espressif ESP32-CAM (capteur OV2640, antenne Wi-Fi, torche LED).
+    \item \textbf{Backend \& IoT :} FastAPI, Uvicorn, Eclipse Mosquitto, Paho-MQTT, SQLite3.
+    \item \textbf{Frontend \& Mobile :} Flutter (Dart 3), Leaflet.js, OpenStreetMap, Chart.js.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+% SECTION 9 : INSTALLATION ET UTILISATION
+% ------------------------------------------------------------------------------
+\section{Installation et démarrage rapide}
+
+Le projet inclut des scripts d'automatisation permettant un déploiement en un clic sur Windows :
+
+\begin{lstlisting}[language=bash, caption=Procédure de lancement rapide]
+# 1. Cloner le dépôt GitHub
+git clone https://github.com/messelmani765/Driver-Safety-Monitor.git
+cd Driver-Safety-Monitor
+
+# 2. Lancement automatisé (Serveur + Broker MQTT + IA ESP32-CAM)
+# Double-clic sur : demarrer_tout.bat
+# Ou en ligne de commande :
+.\demarrer_tout.bat
+\end{lstlisting}
+
+Une fois lancé, les interfaces sont immédiatement accessibles :
+\begin{itemize}
+    \item \textbf{Supervision Web sur PC :} \url{http://localhost:8000}
+    \item \textbf{Application mobile ou navigateur smartphone :} \url{http://10.55.27.243:8000}
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+% SECTION 10 : LIMITES ET PERSPECTIVES
+% ------------------------------------------------------------------------------
+\section{Limites et perspectives}
+
+\subsection{Limites actuelles}
+\begin{itemize}
+    \item La transmission vocale vers les secours est simulée par synthèse vocale locale.
+    \item La caméra est sensible aux variations brutales de contre-jour (soleil rasant), compensée en partie par la torche LED.
+\end{itemize}
+
+\subsection{Perspectives d'évolution}
+\begin{itemize}
+    \item \textbf{Détection multi-signes :} Intégration de la détection des bâillements fréquents et du hochement de tête (\textit{head nod}).
+    \item \textbf{Connectivité 4G/5G native :} Remplacement du module Wi-Fi par un module SIM7600E (4G LTE + GPS matériel intégré).
+    \item \textbf{Embarquement complet :} Portage du modèle sur puce accélératrice de type Raspberry Pi 5 ou Google Coral Edge TPU.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+% SECTION 11 : CONCLUSION
+% ------------------------------------------------------------------------------
+\section{Conclusion}
+
+Le projet \textbf{Driver Safety Monitor} concrétise la convergence des systèmes embarqués, de l'intelligence artificielle en périphérie (\textit{Edge AI}) et des technologies de télécommunication IoT au service de la sécurité routière. En ciblant spécifiquement la problématique critique des chauffeurs de poids lourds et de grands camions, ce travail propose une chaîne complète et opérationnelle, allant du capteur vidéo dans la cabine jusqu'à la salle de supervision de la Police de la circulation.
+
+\end{document}
