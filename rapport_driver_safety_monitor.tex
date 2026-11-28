@@ -1,8 +1,13 @@
 \documentclass[11pt,a4paper]{article}
 
 % --- Packages indispensables et robustes pour Overleaf & LaTeX standard ---
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{fontspec}
+\else
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+\fi
 \usepackage[french]{babel}
 \usepackage{geometry}
 \geometry{top=2.2cm, bottom=2.2cm, left=2.2cm, right=2.2cm}
@@ -282,7 +287,7 @@ L'architecture se décompose en trois sous-ensembles interconnectés selon les s
     \draw [flow] (input) -- (conv1);
     \draw [flow] (conv1) -- (c2f1);
     \draw [flow] (c2f1) -- (c2f2);
-    \draw [flow] (c2f2) |- (c2f3);
+    \draw [flow] (c2f2) -- (c2f3);
     \draw [flow] (c2f3) -- (sppf);
     \draw [flow] (sppf) -- (c2f4);
 
@@ -525,7 +530,7 @@ Un équipement de surveillance ADAS (\emph{Advanced Driver Assistance Systems}) 
 \small
 \begin{tabularx}{\textwidth}{l X c}
 \toprule
-\textbf{Composant / Sous-système} & \textbf{Désignation & Rôle} & \textbf{Coût Estimé (TND / EUR)} \\
+\textbf{Composant / Sous-système} & \textbf{Désignation \& Rôle} & \textbf{Coût Estimé (TND / EUR)} \\
 \midrule
 ESP32-CAM AI-Thinker & Microcontrôleur IoT + Caméra OV2640 & 35 TND ($\approx 10.5$ €) \\
 Alimentation Buck 24V-5V & Régulateur industriel filtré & 15 TND ($\approx 4.5$ €) \\
